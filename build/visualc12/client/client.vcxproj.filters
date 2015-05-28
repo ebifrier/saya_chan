@@ -1,0 +1,184 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\precomp.cpp" />
+    <ClCompile Include="..\..\..\src\logger.cpp" />
+    <ClCompile Include="..\..\..\src\util.cpp" />
+    <ClCompile Include="..\..\..\src\client\client.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\stdinc.cpp" />
+    <ClCompile Include="..\..\..\src\commandpacket.cpp" />
+    <ClCompile Include="..\..\..\src\client\main_client.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\client\client_mainloop.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\replypacket.cpp" />
+    <ClCompile Include="..\..\..\src\saya_chan\benchmark.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\book.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\evaluate.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\mate.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\mate1ply.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\misc.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\move.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\movegen.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\movepick.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\position.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\problem.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\search.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\shogi.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\thread.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\timeman.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\tt.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\uci.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\saya_chan\ucioption.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\rsiservice.cpp" />
+    <ClCompile Include="..\..\..\src\saya_chan\kif.cpp">
+      <Filter>saya_chan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\client\sayachan_client.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\client\cmovenoderow.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\movenode.cpp" />
+    <ClCompile Include="..\..\..\src\movenodelist.cpp" />
+    <ClCompile Include="..\..\..\src\scopedmover.cpp" />
+    <ClCompile Include="..\..\..\src\client\cmovenodetree.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="client">
+      <UniqueIdentifier>{394aa323-6f9c-4a13-819a-fc7f4319d749}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="saya_chan">
+      <UniqueIdentifier>{6b0e86ac-8ca5-4c77-ac9b-2771e964156e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\precomp.h" />
+    <ClInclude Include="..\..\..\src\stdinc.h" />
+    <ClInclude Include="..\..\..\src\logger.h" />
+    <ClInclude Include="..\..\..\src\util.h" />
+    <ClInclude Include="..\..\..\src\exceptions.h" />
+    <ClInclude Include="..\..\..\src\client\client.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\commandpacket.h" />
+    <ClInclude Include="..\..\..\src\replypacket.h" />
+    <ClInclude Include="..\..\..\src\client\searchtask.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\book.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\evaluate.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\history.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\lock.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\misc.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\move.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\movegen.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\movepick.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\param.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\param_micro.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\param_old.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\position.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\rkiss.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\search.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\thread.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\timeman.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\tt.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\types.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\ucioption.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\rsiservice.h" />
+    <ClInclude Include="..\..\..\src\saya_chan\search_godwhale.inc.h">
+      <Filter>saya_chan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\sayachan_if.h" />
+    <ClInclude Include="..\..\..\src\client\cmovenoderow.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\movenode.h" />
+    <ClInclude Include="..\..\..\src\movenodelist.h" />
+    <ClInclude Include="..\..\..\src\scopedmover.h" />
+    <ClInclude Include="..\..\..\src\client\cmovenodetree.h">
+      <Filter>client</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

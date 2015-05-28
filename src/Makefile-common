@@ -1,0 +1,33 @@
+#
+# Common Makefile
+#
+
+OPT = -DNDEBUG -DNANOHA -DEVAL_OLD -DCHK_PERFORM -DOLD_LOCKS \
+      -DUSE_POPCNT -DBITBOARD64 -DUSE_FAST_BIN
+
+INCLUDES = -I. -I.. -I/usr/include $(OPT_INCLUDES)
+CPPFLAGS = $(OPT) $(OPT_CPPFLAGS)
+CXXFLAGS = -std=c++11 -Wall -Wno-unknown-pragmas -g \
+           -march=native -mtune=native -Ofast $(OPT_CXXFLAGS)
+LIBS     = $(OPT_LIBS) -pthread -lm
+
+SAYA_DIR   = ../saya_chan
+SAYA_FILES = benchmark.cpp movepick.cpp book.cpp position.cpp \
+             evaluate.cpp problem.cpp kif.cpp search.cpp shogi.cpp \
+             mate.cpp thread.cpp mate1ply.cpp timeman.cpp misc.cpp \
+             tt.cpp move.cpp uci.cpp movegen.cpp ucioption.cpp
+SAYA_SRCS  = $(SAYA_FILES:%.cpp=$(SAYA_DIR)/%.cpp)
+SAYA_OBJS  = $(SAYA_FILES:%.cpp=$(SAYA_DIR)/%.o)
+
+COMMON_DIR   = ..
+COMMON_FILES = commandpacket.cpp movenodelist.cpp rsiservice.cpp \
+               util.cpp logger.cpp precomp.cpp scopedmover.cpp movenode.cpp \
+               replypacket.cpp stdinc.cpp
+COMMON_SRCS  = $(COMMON_FILES:%.cpp=$(COMMON_DIR)/%.cpp)
+COMMON_OBJS  = $(COMMON_FILES:%.cpp=$(COMMON_DIR)/%.o)
+
+#.cpp.o:
+#	g++ $(INCLUDES) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+common-clean:
+	rm -f $(SAYA_OBJS) $(COMMON_OBJS)

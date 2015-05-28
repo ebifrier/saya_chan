@@ -1,0 +1,486 @@
+2014-10-27  - Ver 2.4.7.23
+
+	* src/logger.cpp: ログ出力時にログレベル名がでるようにしました。また、
+	コードの行数も一緒に出るようにしました。
+
+2014-10-27  - Ver 2.4.7.22
+
+	* src/position.cpp: moveがより効率的に行われるように、配列ではなく
+	vectorで盤面を管理するようにしました。また、局面の出力がより分かりやす
+	くなるように駒を漢字で出力するようにしました。
+	* src/syncposition.cpp: ルート局面を一手だけ進めるためのメソッドを追加
+	しました。
+
+2014-10-27  - Ver 2.4.7.21
+
+	* src/server/serverclient.cpp: ファイル名が分かりにくくなるため、
+	client.cppからserverclient.cppに変更しました。
+	* src/server/*: コンパイルが通るようにいくつかのファイルを修正しました。
+
+2014-10-27  - Ver 2.4.7.20
+
+	* src/client/*: クライアント用のファイルをいくつか追加しました。
+
+2014-10-27  - Ver 2.4.7.19
+
+	* src/rsiservice.cpp: RSI(remote shogi protocol)を処理するための通信用
+	クラスを追加しました。(CommandIOから改名しました)
+
+2014-10-27  - Ver 2.4.7.18
+
+	* src/commandpacket.cpp: コマンド用のクラスを修正し、いくつかのコマンド
+	の処理用メソッドなどを追加しました。
+	* src/replypacket.cpp: 応答コマンド用のクラスを追加しました。
+
+2014-10-27  - Ver 2.4.7.17
+
+	* src/bonanza6/ini.c: クライアント側では定跡ファイルの読み込みを行わな
+	いようにしました。
+	* src/bonanza6/iterate.c: 思考後の指し手の評価値が正しく反映されないバ
+	グを修正しました。
+
+2014-10-20  - Ver 2.4.7.16
+
+	* src/exceptions.h: パースエラー用の例外クラスを追加しました。
+	* src/commandpacket.cpp: サーバーとクライアントのやり取りに使うコマンド
+	クラスを実装しました。
+
+2014-10-20  - Ver 2.4.7.15
+
+	* src/position.cpp: 局面が平手の初期局面か調べるメソッドを追加しました。
+	* src/syncposition.cpp: シングルトンのコンストラクタがどのタイミングで
+	呼ばれるか分からないため、コンストラクタでinitializeを呼ぶのをやめまし
+	た。
+
+2014-10-18  - Ver 2.4.7.14
+
+	* src/client/csearch.cpp: クライアント用の探索クラスを追加しました。
+	* src/server/rootsearch.cpp: ルートノードの探索用ファイルを追加しました。
+	(開発中です)
+
+2014-10-18  - Ver 2.4.7.13
+
+	* src/move.cpp: 文字出力に関するバグを修正しました。
+	* src/syncposition.cpp: bonanzaの局面とPVを同期するためのシングルトンク
+	ラスを追加しました。
+
+2014-10-18  - Ver 2.4.7.12
+
+	* src/client/client_main.cpp: server用のファイルと名前がかぶるため、
+	main.cppからリネームしました。
+	* src/server/server_main.cpp: client用のファイルと名前がかぶるため、
+	main.cppからリネームしました。
+
+2014-10-18  - Ver 2.4.7.11
+
+	* src/stdinc.cpp: 共通オブジェクトの定義用ファイルを追加しました。
+	* src/precomp.h: コンパイル速度が多少なりとも早くなるように、プリコンパ
+	イル済みヘッダでインクルードするファイルを減らしました。
+
+2014-10-07  - Ver 2.4.7.10
+
+	* src/movenode.cpp: 指し手の探索結果を管理するためのクラスを追加しまし
+	た。
+
+2014-10-07  - Ver 2.4.7.9
+
+	* src/commandio.cpp: コマンドの通信クラスを追加しました。
+	* src/commandpacket.h: server/client間の通信用コマンドデータクラスを追
+	加しました。
+
+2014-10-07  - Ver 2.4.7.8
+
+	* src/position.cpp: operator==()など追加し、テストにて発見されたソース
+	中のバグを修正しました。
+
+2014-10-07  - Ver 2.4.7.7
+
+	* src/server/main.cpp: gtestを使うようにし、gtest.libへの参照を行うよう
+	にしました。
+	* src/io_sfen.cpp: SFEN形式の指し手などを扱うためのファイルを追加しまし
+	た。
+	* src/io_csa.cpp: CSA形式の指し手を扱うためのファイルを追加しました。
+	* src/test/sfen_test.cpp: SFEN用のテストケースを追加しました。
+
+2014-10-07  - Ver 2.4.7.6
+
+	* src/stdinc.h: boostのusing宣言をやめ、必要なクラスごとにusingするよう
+	にしました。
+	* src/server/server.h, src/server/client.h: コンパイルが通るように修正
+	しました。
+
+2014-10-07  - Ver 2.4.7.5
+
+	* src/bonanza6/*: Bonanza関連のファイルを少し修正しました。
+
+2014-10-04  - Ver 2.4.7.4
+
+	* src/server/*: 共通ファイル以外ファイルのコンパイルが通るようにしまし
+	た。
+
+2014-10-04  - Ver 2.4.7.3
+
+	* src/server/*: サーバー・クライアントに共通のファイルをsrcディレクトリ
+	に移動しました。
+	* src/position.cpp: BoardクラスをPositionクラスに改名しました。
+	* src/logger.cpp: ログ出力に時間などを出すようにしました。
+
+2014-09-28  - Ver 2.4.7.2
+
+	* src/bonanza6: src/common/bonanza6からディレクトリを移動しました。
+
+2014-07-13  - Ver 2.4.7.1
+
+	* utility/Bonako/Bonako: RagnarokでCSAファイルの扱いを変更したのに合わ
+	せて、ソースを修正しました。
+
+2014-07-05  - Ver 2.4.7.0
+
+	* バージョンを2.4.7に更新しました。
+
+2014-06-14  - Ver 2.4.5.8
+
+	* utility/Bonako/Bonako/Global.cs: 初期化方法を修正しました。
+
+2014-06-14  - Ver 2.4.5.7
+
+	* utility/Bonako/Bonako/View/StarWidthConverter.cs: 不要なファイルを削
+	除しました。
+	* utility/Bonako/Bonako/View/MainControl.xaml: 不要なコンバータを削除し
+	ました。
+
+2014-06-14  - Ver 2.4.5.6
+
+	* utility/Bonako/Bonako/ShogiData: プロパティ名などを修正しました。また、
+	一部のエフェクトをDiffuseからEmissiveに変更しました。
+
+2014-06-13  - Ver 2.4.5.5
+
+	* src/common/bonanza6/shogi.h: 最大スレッド数を12から32に引き上げました
+	。
+
+2014-06-13  - Ver 2.4.5.4
+
+	* utility/Bonako/Bonako/Bonako.csproj: Ragnarok.Presentation.Extraを追
+	加しました。
+	* utility/Bonako/Bonako/View/ShogiWindow.xaml: 将棋盤のコントロールを
+	UIElement3Dベースのものに変更しました。
+
+2014-06-13  - Ver 2.4.5.3
+
+	* utility/Bonako/Bonako/ViewModel/EffectContext.cs,
+	  utility/Bonako/Bonako/ViewModel/EffectManager.cs: 型名をPositionから 
+	Squareに修正しました。
+
+2014-06-13  - Ver 2.4.5.2
+
+	* utility/Bonako/Bonako/ShogiData/Background: 画面の想定解像度を変更し
+	ました。
+
+2014-05-21  - Ver 2.4.5.0
+
+	* utility/Bonako/Bonako/Commands.cs: 基準深さを変更しました。
+	* utility/Bonako/Bonako/dist/history.yaml: ボナ子の更新履歴を更新しまし
+	た。
+	* utility/Bonako/Bonako/Properties/AssemblyInfo.cs: ボナ子のバージョン
+	を2.4.5に更新しました。
+
+2014-05-21  - Ver 2.1.13
+
+	* src/server/client.cpp: 送信データと局面IDの不一致を調べ、不一致回数が
+	一定値を超えたらエラーとする判定方式をやめました。指し手が早いときは局
+	面IDと送信データが簡単にずれてしまうためです。また、対局中とそれ以外の
+	状態を分け、対局中でなければクライアントをidleさせるようにしました。
+	* src/server/server.cpp: 接続しているマシン台数やNPSなどを対局中でなく
+	とも常に送るようにしました。また、評価値や現在対局中かどうかのフラグを
+	保持するようにしました。
+	* src/server/server_move.cpp: 時間設定をparam.txtから行うようにしました。
+	また、対局状態の管理や評価値などの扱い(相手の手番であれば符号を逆にする)
+	を修正しました。
+
+2014-05-21  - Ver 2.1.12
+
+	* src/common/bonanza6/sckt.c: CSAの対局開始時にサーバーのinit_gameを呼
+	び出すようにしました。(以前は局面の初期化時に送っていました)
+	* src/common/bonanza6/utility.c: クライアントのログを出すようにしました。
+	* src/common/bonanza_if.h, src/server/bonanza_if.cpp: 対局終了を知らせ
+	るフックを追加しました。 
+
+2014-05-21  - Ver 2.1.11
+
+	* src/common/bonanza6/iterate.c, src/common/bonanza6/searchr.c: クライ
+	アントがサーバーに候補手を送りすぎないようにしました(最善手が変化した場
+	合や、時間がたった場合のみ手を送るようにしました)。また、送信する手は次
+	善手ではなく最善手を送るようにしました。
+	* src/common/bonanza6/ponder.c: 不要なログ出力を削除しました。
+	* src/common/bonanza6/proce.c: 指し手の送信に関する変更を行うと同時に、
+	サーバーに対局終了の通知を送るようにしました。
+
+2014-05-21  - Ver 2.1.10
+
+	* build/visualc10/godwhale.sln: ソリューション名をserver.slnから
+	godwhale.slnに変更しました。
+	* build/visualc10/client/client.vcxproj: プロジェクト名を
+	bonaster.vcxprojからclient.vcxprojに変更しました。
+
+2014-05-20  - Ver 2.1.9
+
+	* src/client/Makefile, src/server/Makefile, src/Makefile-common:
+	Makefileを整理しました。
+	* src/client/Makefile: ファイルの配布用環境を整えました。
+
+2014-05-20  - Ver 2.1.8
+
+	* src/client/client.cpp: 局面IDが違うだけでは接続を切らないようにしまし
+	た。(指し手が早いときはIDがずれやすいため)
+	* src/client/logger.cpp, src/client/precomp.h: インクルード関係でエラー
+	が起きやすいempty_deleterを自前で用意しました。
+
+2014-05-20  - Ver 2.1.7
+
+	* src/common/bonanza6/data.c: ソフト名をBonanzaからGodWhaleに変更しまし
+	た。
+	* src/common/bonanza6/proce.c, src/common/bonanza6/shogi.h: 指し手を過
+	剰に送らないようにするため、指し手に変化があった場合に手を送るようにし
+	ました。
+
+2014-05-18  - Ver 2.1.6
+
+	* utility/Bonako/Bonako/dist/history.yaml: ボナ子のバージョンを2.4.4に
+	更新しました。
+
+2014-05-18  - Ver 2.1.5
+
+	* src/common/bonanza6/proce.c: 局面を初期化するための'new'コマンドを追
+	加しました。
+	* utility/Bonako/Bonako/ViewModel/BonanzaCommandParser.cs: ボナ子側で
+	'new'コマンドを解析するようにしました。
+
+2014-05-18  - Ver 2.1.4
+
+	* src/common/bonanza6/utility.c: ini_gameでinit_game_hookを呼び出すよう
+	にしました。
+        * src/server/client.cpp: ボナ子から送られてきたpidと、サーバー側のpid
+	がずっと違うようであれば接続を切断するようにしました。
+	* src/server/server_move.cpp: 局面の更新時にpidも更新するようにしまし
+	た。
+
+2014-05-13  - Ver 2.1.3
+
+	* src/server/server_move.cpp: 少しリファクタリングしました。
+	* src/client: 不要なファイルを削除しました。
+	* src/common/bonanza6/proce.c: movehitしたとき、局面IDを更新するように
+	しました。
+
+2014-05-04  - Ver 2.1.2
+
+	* utility/ServerProxy/Program.cs: サーバーアドレスなどを修正しました。
+
+2014-05-04  - Ver 2.1.1
+
+	* utility/Bonako/Bonako/Global.cs: エラーで接続が切れた場合、並列化サー
+	バーに自動で再接続するようにしました。
+	* utility/Bonako/Bonako/ViewModel/BonanzaCommandParser.cs: 評価値の解釈
+	方法を修正し、正しい値が出るようにしました。また、movehitを解析するよう
+	にしました。
+	* ボナ子のバージョンを更新しました。
+
+2014-05-03  - Ver 2.1.0
+
+	* src/common/bonanza6/sckt.c: socketのaccept機能を追加しました。
+	* src/server/client.cpp: movehitに局面IDを付加するようにしました。
+	* src/server/Makefile: ubuntu上でコンパイルできるようにしました。
+
+2014-05-02  - Ver 2.0.9
+
+	* src/common/bonanza6/proce.c: initに持ち時間などの情報が追加されました
+	。
+	* src/common/bonanza6/time.c: 時間調整時にそれをクライアントに送信する
+	ようにしました。
+	* src/server/server_move.cpp: 時間や指し手の管理を調整しました。
+	* utility/Bonako/Bonako/ViewModel/BonanzaCommandParser.cs: initコマンド
+	を修正し、また先手・後手の時間変化コマンドを受信するようにしました。
+	* utility/ServerProxy/ServerProxy: コンパイルできるようにライブラリの位
+	置を変更しました。
+
+2014-05-01  - Ver 2.0.8
+
+	* utility/Bonako/Bonako/ViewModel/BonanzaCommandParser.cs: 新版の大合神
+	クジラちゃんに対応したコマンドを解析するようにしました。
+	* utility/Bonako/Bonako/ViewModel/ShogiModel.cs: 評価値のリアルタイムな
+	更新に対応しました。
+	* utility/Bonako/Bonako/View/MainControl.xaml: クライアントの初期化を待
+	つ必要がなくなったため、それに合わせたGUIの変更を行いました。
+
+2014-05-01  - Ver 2.0.7
+
+	* src/common/bonanza6/ini.c: fv.binの読み込み方を変更し、より高速に使え
+	るような形に修正しました。
+	* src/common/bonanza6/proce.c: 仮指の手をちゃんと管理するようにしました。
+	また、mnjのinitで対局者名なども一緒に送るようにしました。
+	* src/server/board.cpp: Moveクラスを使うようにし、またUnmoveのバグを修
+	正しました。
+	* src/server/client.cpp: ゲーム開始時にinitで指し手や対局者名を送るよう
+	にしました。また、指し手を無視する機能も追加しました。
+	* src/server/main.cpp: ponderに対応し、相手の手番でもiterateが呼び出さ
+	れるようにしました。
+	* src/server/server.cpp: 指し手の選択や、時間管理、無視する指し手などの
+	設定機能を追加しました。
+	* src/server/move.cpp: 指し手を管理するためのクラスを追加しました。
+	* src/server/thinktime.cpp: 指し手の時間を管理するためのファイルを追加
+	しました。
+
+2014-04-28  - Ver 2.0.6
+
+	* src/server/board.cpp: 指し手の履歴を保存するようにし、かつ指し手を戻す
+	ときに手番の転換を行うようにしました。(BUG FIX)
+	* src/server/util.cpp: ユーティリティ関数を追加しました。
+	* build/visualc10/server/server.vcxproj: ファイルの追加に合わせてプロジェ
+	クトファイルを更新しました。
+
+2014-04-28  - Ver 2.0.5
+
+	* src/common/bonanza6/searchr.c: 一部の指し手を送るとき、間違った変化を
+	使っていた部分を修正しました。
+	* src/common/bonanza6/bitop.h: 高速化版ビットボードへ対応するためのオペ
+	レーションを追加しました。
+	* src/common/bonanza6/shogi.h: Puella αに導入されていた高速化された
+	ビットボードを導入しました。
+
+2014-04-28  - Ver 2.0.4
+
+	* utility/Bonako/Bonako/dist/versioninfo.xml: ボナ子のバージョンを更新
+	しました。
+	* utility/Bonako/Bonako/Commands.cs: クジラちゃんの接続先アドレスを変更
+	しました。
+
+2014-04-28  - Ver 2.0.3
+
+	* src/server/server.cpp: クライアントをshared_ptrではなくweak_ptrで保持
+	するようにし、クライアントの処理が終了したら自律的にメモリを破棄するよ
+	うにしました。
+	* src/server/client.cpp: PV情報を受け取るようにしました。
+	* src/server/stdinc.h: 簡単にロックが行えるLOCK定義を追加しました。
+
+2014-04-19  - Ver 2.0.2
+
+	* とりあえず、将棋サーバーで対局できる状態にしました。
+	* src/server/board.cpp: 局面管理用のクラスを追加しました。
+
+2014-04-17  - Ver 2.0.1
+
+	* src/common/bonanza6/proce.c: クラスタ時に行っていたkkp, kppテーブルの
+	微調整をやめました。
+	* src/server/board.cpp: 局面把握用のクラスを追加しました。
+	* src/server/server.cpp: 初期化用メソッドを追加しました。
+
+2014-04-16  - Ver 2.0.0
+
+	* ファイル配置を大幅に変更しました。
+	* 新バージョンのサーバーファイルを追加しました。
+
+2013-10-31  - Ver 1.1.9
+
+	* conv/convfv.cpp: convfv.ccから改名し、またコンパイルが通るように中身
+	を修正しました。
+	* Makefile: 実行ファイル名をgmx->gwxに変更しました。
+
+2013-10-31  - Ver 1.1.8
+
+	* server/visualc10/GodWhale/GodWhale.vcxproj: 出力ファイル名を
+	GodWhale.exeからgwx.exeに変更しました。
+	* server/bonanza6/proce.c: usiに対応するためのコードを追加しました。
+	* server/bonanza6/time.c: reset_timeで先手のみor後手のみでも残り時間を
+	設定できるようにしました。
+
+2013-10-30  - Ver 1.1.7
+
+	* Move -> move_t に、valtypeE -> ValueType にリネームしました。
+	* server/bonanza6/shogi.h: occupiedC型をoccupied_t型に改名しました。ま
+	た、pc_on_sqとkkpをstaticオブジェクトとして定義するようにしました。
+
+2013-10-29  - Ver 1.1.6
+
+	* server/time.h: コメントを追加しました。
+	* server/stdinc.h: 共通ヘッダファイルです。pcommon3.hから改名しました。
+
+2013-10-29  - Ver 1.1.5
+
+	* server/invokempi.cpp: プログラムオプションの解析プログラムを整理しま
+	した。
+	* server/visualc10/Bonanza: デバッグ用にBonanza単体用のプロジェクトを追
+	加しました。
+	* server/visualc10/server2.sln: 不要なプロジェクトファイルを削除しまし
+	た。
+
+2013-10-28  - Ver 1.1.4
+
+	* server/Makefile: bonanza側とコンパイルオプションを合わせるようにしま
+	した。ヘッダの関係でそうしないと動作がおかしくなることがあります。
+	* server/bonanza6/bbini.c: VC上でのバグ(uint64_t型をuint32_t型で計算し
+	上位の桁が切り捨てられていた)を解消しました。
+
+2013-10-28  - Ver 1.1.3
+
+	* server/bonanza6/time.c: unsigned intの引き算に関するバグを修正しま
+	した。
+
+2013-10-26  - Ver 1.1.2
+
+	* server/putil.cpp: 値がオーバーフローしていたバグを修正しました。
+
+2013-10-19  - Ver 1.1.1
+
+	* ディレクトリ名を変更しserver→server.old, server2→serverとしました。
+
+2013-10-05  - Ver 1.1.0
+
+	* server2: puella αのソースを追加し、インデントなどの調整を行いまし
+	た。
+
+2013-08-17  - Ver 1.0.4
+
+	* Bonako/Bonako/Commands.cs: 評価値の符号が変わるためサーバーからのPVの
+	受信を取りやめました。
+
+2013-08-11  - Ver 1.0.3
+
+	* Bonako/Bonako/VariationInfo.cs: ノード数を保存するようにしました。
+	* Bonako/Bonako/ViewModel/BonanzaCommandParser.cs: ウィンドウに合計NPS
+	を表示するのをやめました。計算方法が間違っていたためです。
+	* Bonako/Bonako/ViewModel/ShogiModel.cs: 表示する変化をノード数順に並べ
+	るようにしました。
+	* client/searchr.c: ローカルボナンザから取得する変化にノード数情報を付
+	加するようにしました。
+	* Bonako/Bonako/dist/history.yaml: 更新履歴を更新するようにしました。
+
+2013-05-10  - Ver 1.0.2
+
+	* Server: コンピュータ選手権用にサーバーファイルを更新しました。まず、
+	先読み手を各クライアントに通知するためのコマンドpmoveやponderコマンド
+	を追加しました。それから先読みがヒットしたことを示すmovehitやponderhit
+	コマンドも追加しました。また、変化手順の通知コマンド、対局者名や手番を
+	送るゲーム情報も新たに作成しました。
+
+2013-05-02  - Ver 1.0.1
+
+	* Bonako/Bonako/ViewModel/ShogiModel.cs: 実際に指された手の表示をより分
+	かりやすくしました。
+	* Bonako/Bonako/ViewModel/BonanzaCommandParser.cs: マシン台数などを受信
+	するようにしました。
+	* Bonako/Bonako/ViewModel/ShogiModel.cs: 各変化の符号をつけるようにしま
+	した。
+
+2013-05-01  - Ver 1.0.0
+
+	* 遅ればせながらCHANGELOGの記述を開始。
+	* Bonako/Bonako/MainWindow.xaml: 将棋ウィンドウ表示のためのメニューを追
+	加しました。
+	* Bonako/Bonako/View/LogControl.xaml: ログの自動スクロールとコピー機能
+	を追加しました。
+	* Bonako/Bonako/View/ShogiWindow.xaml: 盤面反転機能や評価値表示機能、ま
+	た対局者名の表示や残り時間の表示を行うようにしました。
+	* Bonako/Bonako/ViewModel/BonanzaCommandParser.cs: gameinfoコマンドを解
+	析するようにしました。このコマンドは自分の手番や対局者の情報などを送り
+	ます。
+
