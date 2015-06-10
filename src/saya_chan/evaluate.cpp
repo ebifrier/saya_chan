@@ -55,12 +55,12 @@
 #define PcPcOn(i,j)         fv_pp[i][j]
 
 //KKP
-#define PcOnSq2(k,i)         pc_on_sq[k][(i)*((i)+3)/2]
+#define PcOnSq2(k,i)        pc_on_sq[k][(i)*((i)+3)/2]
 //KPP
 #define PcPcOnSq(k,i,j)     pc_pc_on_sq[k][(i)*((i)+1)/2+(j)]
-#define PcPcOnSqAny(k,i,j) ( i >= j ? PcPcOnSq(k,i,j) : PcPcOnSq(k,j,i) )
+#define PcPcOnSqAny(k,i,j)  ( i >= j ? PcPcOnSq(k,i,j) : PcPcOnSq(k,j,i) )
 
-#define PcPcOnSq2(k,i,j)    pc_pc_on_sq2[k][i * kp_end + j]
+#define PcPcOnSq2(k,i,j)    pc_pc_on_sq2[k][(i) * kp_end + (j)]
 
 //KK
 #define KK(k,i)	　          fv_kk[k][i]
@@ -168,13 +168,10 @@ namespace {
     short p_value[31];
 
 #if !defined(EVAL_MICRO)
-    //short fv_pp[pp_bend][pp_end];
-    //short fv_kp[nsquare][kp_end];
-    //short pc_pc_on_sq[nsquare][kp_end * (kp_end + 1) / 2];
     short kkp[nsquare][nsquare][kkp_end];
     short pc_pc_on_sq2[nsquare][kp_end * (kp_end + 1)];
 	short fv_kk[nsquare][nsquare];
-	short fv_pp[kp_end][kp_end];
+	//short fv_pp[kp_end][kp_end];
 #endif
 }
 
@@ -193,96 +190,101 @@ namespace NanohaTbl {
     };
 }
 
+typedef short kpp_entry_t[kp_end * (kp_end + 1) / 2];
+
 void Position::init_evaluate()
 {
-    int iret=0;
-#if !defined(EVAL_MICRO)
-    FILE *fp;
-    FILE *fp2;
-    const char *fname = "評価ベクトル";
-    const char *fname2 = "bonanza評価ベクトル";
+#if 0
+    const char *fname = "eval38.bin";
+#else
+    const char *fname = "fv38.bin";
+#endif
+    FILE *fp = NULL;
+    int iret = 0;
 
     do {
-        size_t size;
-        size_t size2;
-        fname = "fv_mini.bin"/*FV_BIN*/;
-        //fname2 = "fv.bin";
-        fname2 = "eval38.bin";
-        //fp = fopen(fname, "rb");
-        fp2 = fopen(fname2, "rb");
-        //if ( fp == NULL ) { iret = -2; break;}
-        if (fp2 == NULL) { iret = -2; break; }
-
-		//PP-nanoha
-       /* size = pp_bend * pp_end;
-        if ( fread( fv_pp, sizeof(short), size, fp ) != size )
-        {
-            iret = -2;
-            break;
-        }*/
-
-		//KP
-        /*size = nsquare * kp_end;
-        if ( fread( fv_kp, sizeof(short), size, fp ) != size ) {
-            iret = -2;
-            break;
-        }*/
-
-        //KPP
-        size2 = nsquare * (kp_end * (kp_end + 1) );
-        if (fread(pc_pc_on_sq2, sizeof(short), size2, fp2) != size2)
-        {
+        fp = fopen(fname, "rb");
+        if (fp == NULL) {
             iret = -2;
             break;
         }
-        //KKP
-        size2 =  nsquare * nsquare * kkp_end;
-        if (fread(kkp, sizeof(short), size2, fp2) != size2)
+
+        //KPP
+#if 0
+        size_t size = nsquare * (kp_end * (kp_end + 1));
+        if (fread(pc_pc_on_sq2, sizeof(short), size, fp) != size) {
+            iret = -2;
+            break;
+        }
+#else
+        size_t size = nsquare * kp_end * (kp_end + 1) / 2;
+        kpp_entry_t *pc_pc_on_sq = (kpp_entry_t *)malloc(size * sizeof(short));
+        if (fread(pc_pc_on_sq, sizeof(short), size, fp) != size)
         {
+            free(pc_pc_on_sq);
+            iret = -2;
+            break;
+        }
+
+        //KPP計算
+        int i, j, k;
+        for (k = 0; k < nsquare; k++)
+        {
+            for (i = 0; i < kp_end; i++)
+            {
+                for (j = 0; j < kp_end; j++)
+                {
+                    if (j <= i)
+                    {
+                        PcPcOnSq2(k, i, j) = PcPcOnSq(k, i, j);
+                    }
+                    else {
+                        PcPcOnSq2(k, i, j) = PcPcOnSq(k, j, i);
+                    }
+                };
+            };
+        };
+
+        free(pc_pc_on_sq);
+        pc_pc_on_sq = nullptr;
+#endif
+
+        //KKP
+        size = nsquare * nsquare * kkp_end;
+        if (fread(kkp, sizeof(short), size, fp) != size) {
             iret = -2;
             break;
         }
 
 		//KK
-		size2 = nsquare * nsquare;
-		if (fread(fv_kk, sizeof(short), size2, fp2) != size2)
-		{
+        size = nsquare * nsquare;
+        size_t s = fread(fv_kk, sizeof(short), size, fp);
+        if (s != size) {
 			iret = -2;
 			break;
 		}
 
-		//PP
-		/*size2 = kp_end * kp_end;
-		if (fread(fv_pp, sizeof(short), size2, fp2) != size2)
-		{
-			iret = -2;
-			break;
-		}*/
-
-        /*if (fgetc(fp) != EOF) {
-            iret = -2;
-            break;
-        }*/
-        if(fgetc(fp2) != EOF) {
+		//EOF判定
+        if (fgetc(fp) != EOF) {
             iret = -2;
             break;
         }
     } while (0);
-    //if (fp) fclose( fp );
-    if (fp2) fclose(fp2);
+
+    if (fp) fclose(fp);
 
     if (iret < 0) {
-#if !defined(NDEBUG)
-        std::cerr << "Can't load " FV_BIN "." << std::endl;
-#endif
+        // 評価用ファイルが読めない場合は起動させない。
+        std::cerr << "Can't load '" << fname << "'." << std::endl;
+        exit(1);
+
 #if defined(CSADLL) || defined(CSA_DIRECT)
         ::MessageBox(NULL, "評価ベクトルがロードできません\n終了します", "Error!", MB_OK);
         exit(1);
-#endif    // defined(CSA_DLL) || defined(CSA_DIRECT)
-    }
 #endif
+    }
 
-    for (int i = 0; i < 31; i++) { p_value[i]       = 0; }
+    for (int i = 0; i < 31; i++) { p_value[i] = 0; }
 
     p_value[15+pawn]       = DPawn;
     p_value[15+lance]      = DLance;
@@ -511,7 +513,6 @@ int Position::make_list(int * pscore,/* int list0[NLIST], int list1[NLIST],*/ in
         score -= kkp[sq_bk1][sq_wk1][kkp_hand_gold + j + 1];
         listA[nlist + j] = kp_hand_wgold + j + 1;
         listB[nlist + j] = kp_hand_bgold + j + 1;
-
     }
     nlist += i;
 
@@ -531,213 +532,57 @@ int Position::make_list(int * pscore,/* int list0[NLIST], int list1[NLIST],*/ in
     }
     nlist += i;
 
-    /**/
-    
-    //int sfu_list0[9];
-    //int sfu_list1[9];
-    //int sfu_nlist = 0;
-    //int gfu_list0[9];
-    //int gfu_list1[9];
-    //int gfu_nlist = 0;
-    //int sky_list0[4];
-    //int sky_list1[4];
-    //int sky_nlist = 0;
-    //int gky_list0[4];
-    //int gky_list1[4];
-    //int gky_nlist = 0;
-    //int ske_list0[4];
-    //int ske_list1[4];
-    //int ske_nlist = 0;
-    //int gke_list0[4];
-    //int gke_list1[4];
-    //int gke_nlist = 0;
-    //int sgi_list0[4];
-    //int sgi_list1[4];
-    //int sgi_nlist = 0;
-    //int ggi_list0[4];
-    //int ggi_list1[4];
-    //int ggi_nlist = 0;
-    // 金の動きをする駒の数なので最大金＋銀＋桂＋香＋歩の枚数
-    //int ski_list0[34];
-    //int ski_list1[34];
-    //int ski_nlist = 0;
-    //int gki_list0[34];    
-    //int gki_list1[34];
-    //int gki_nlist = 0;
-    //int ska_list0[2];
-    //int ska_list1[2];
-    ////int gka_list0[2];
-    //int gka_list1[2];
-    //int gka_nlist = 0;
-    //int shi_list0[2];
-    //int shi_list1[2];
-    //int shi_nlist = 0;
-    //int ghi_list0[2];
-    //int ghi_list1[2];
-    //int ghi_nlist = 0;
-    //int sum_list0[2];
-    //int sum_list1[2];
-    //int sum_nlist = 0;
-    //int gum_list0[2];
-    //int gum_list1[2];
-    //int gum_nlist = 0;
-    //int sry_list0[2];
-    //int sry_list1[2];
-    //int sry_nlist = 0;
-    //int gry_list0[2];
-    //int gry_list1[2];
-    //int gry_nlist = 0;
-
-    /*int sfu_listA[9];
-    int sfu_listB[9];
-    int gfu_listA[9];
-    int gfu_listB[9];
-    int sky_listA[4];
-    int sky_listB[4];
-    int gky_listA[4];
-    int gky_listB[4];
-    int ske_listA[4];
-    int ske_listB[4];
-    int gke_listA[4];
-    int gke_listB[4];
-    int sgi_listA[4];
-    int sgi_listB[4];
-    int ggi_listA[4];
-    int ggi_listB[4];*/
-     //金の動きをする駒の数なので最大金＋銀＋桂＋香＋歩の枚数
-    /*int ski_listA[34];
-    int ski_listB[34];
-    int gki_listA[34];
-    int gki_listB[34];
-    int ska_listA[2];
-    int ska_listB[2];
-    int gka_listA[2];
-    int gka_listB[2];
-    int shi_listA[2];
-    int shi_listB[2];
-    int ghi_listA[2];
-    int ghi_listB[2];
-    int sum_listA[2];
-    int sum_listB[2];
-    int gum_listA[2];
-    int gum_listB[2];
-    int sry_listA[2];
-    int sry_listB[2];
-    int gry_listA[2];
-    int gry_listB[2];*/
-
     int x, y/*,nlist*/;
     //nlist = NPiece;
     for (y = RANK_1; y <= RANK_9; y++) {
         for (x = FILE_1; x <= FILE_9; x++) {
             const int z = (x << 4)+y;
-            /*sq = NanohaTbl::z2sq[z];*/
             convertedsq = conv_z2sq(z);
             switch (ban[z]) {
             case SFU:
-                /*sfu_list0[sfu_nlist] = pp_bpawn + sq;
-                sfu_list1[sfu_nlist] = pp_wpawn + Inv(sq);*/
-                /*score += PcOnSq(sq_bk0, kp_bpawn + sq);
-                score -= PcOnSq(sq_bk1, kp_wpawn + Inv(sq));*/
-                //sfu_listA[sfu_nlist] = kp_bpawn + convertedsq;
-                //sfu_listB[sfu_nlist] = kp_wpawn + Inv(convertedsq);
                 score += kkp[sq_bk0][sq_wk0][kkp_pawn + convertedsq];
-                /*assert(sfu_list0[sfu_nlist] >= kp_hand_end);
-                assert(sfu_list1[sfu_nlist] >= kp_hand_end);
-                sfu_nlist += 1;*/
                 listA[nlist] = kp_bpawn + convertedsq;
                 listB[nlist] = kp_wpawn + Inv(convertedsq);
                 nlist++;
                 break;
             case GFU:
-                /*gfu_list0[gfu_nlist] = pp_wpawn + sq;
-                gfu_list1[gfu_nlist] = pp_bpawn + Inv(sq);*/
-                //gfu_listA[gfu_nlist] = kp_wpawn + convertedsq;
-                //gfu_listB[gfu_nlist] = kp_bpawn + Inv(convertedsq);
                 score -= kkp[sq_bk1][sq_wk1][kkp_pawn + Inv(convertedsq)];
-                /*score += PcOnSq(sq_bk0, kp_wpawn + sq);
-                score -= PcOnSq(sq_bk1, kp_bpawn + Inv(sq));*/
-                /*assert(gfu_list0[gfu_nlist] >= kp_hand_end);
-                assert(gfu_list1[gfu_nlist] >= kp_hand_end);
-                gfu_nlist += 1;*/
                 listA[nlist] = kp_wpawn + convertedsq;
                 listB[nlist] = kp_bpawn + Inv(convertedsq);
                 nlist++;
                 break;
             case SKY:
-                /*sky_list0[sky_nlist] = pp_blance + sq;
-                sky_list1[sky_nlist] = pp_wlance + Inv(sq);*/
-                //sky_listA[sky_nlist] = kp_blance + convertedsq;
-                //sky_listB[sky_nlist] = kp_wlance + Inv(convertedsq);
                 score += kkp[sq_bk0][sq_wk0][kkp_lance + convertedsq];
-                //score += PcOnSq(sq_bk0, kp_blance + sq);
-                //score -= PcOnSq(sq_bk1, kp_wlance + Inv(sq));
-                //sky_nlist += 1;
                 listA[nlist] = kp_blance + convertedsq;
                 listB[nlist] = kp_wlance + Inv(convertedsq);
                 nlist++;
                 break;
             case GKY:
-                /*gky_list0[gky_nlist] = pp_wlance + sq;
-                gky_list1[gky_nlist] = pp_blance + Inv(sq);*/
-                //gky_listA[gky_nlist] = kp_wlance + convertedsq;
-                //gky_listB[gky_nlist] = kp_blance + Inv(convertedsq);
                 score -= kkp[sq_bk1][sq_wk1][kkp_lance + Inv(convertedsq)];
-                /*score += PcOnSq(sq_bk0, kp_wlance + sq);
-                score -= PcOnSq(sq_bk1, kp_blance + Inv(sq));*/
-                //gky_nlist += 1;
                 listA[nlist] = kp_wlance + convertedsq;
                 listB[nlist] = kp_blance + Inv(convertedsq);
                 nlist++;
                 break;
             case SKE:
-                //ske_list0[ske_nlist] = pp_bknight + sq;
-                //ske_list1[ske_nlist] = pp_wknight + Inv(sq);
-                //ske_listA[ske_nlist] = kp_bknight + convertedsq;
-                //ske_listB[ske_nlist] = kp_wknight + Inv(convertedsq);
                 score += kkp[sq_bk0][sq_wk0][kkp_knight + convertedsq];
-                //score += PcOnSq(sq_bk0, kp_bknight + sq);
-                //score -= PcOnSq(sq_bk1, kp_wknight + Inv(sq));
-                //ske_nlist += 1;
                 listA[nlist] = kp_bknight + convertedsq;
                 listB[nlist] = kp_wknight + Inv(convertedsq);
                 nlist++;
                 break;
             case GKE:
-                //gke_list0[gke_nlist] = pp_wknight + sq;
-                //gke_list1[gke_nlist] = pp_bknight + Inv(sq);
-                //gke_listA[gke_nlist] = kp_wknight + convertedsq;
-                //gke_listB[gke_nlist] = kp_bknight + Inv(convertedsq);
                 score -= kkp[sq_bk1][sq_wk1][kkp_knight + Inv(convertedsq)];
-                //score += PcOnSq(sq_bk0, kp_wknight + sq);
-                //score -= PcOnSq(sq_bk1, kp_bknight + Inv(sq));
-                //gke_nlist += 1;
                 listA[nlist] = kp_wknight + convertedsq;
                 listB[nlist] = kp_bknight + Inv(convertedsq);
                 nlist++;
                 break;
             case SGI:
-                //sgi_list0[sgi_nlist] = pp_bsilver + sq;
-                //sgi_list1[sgi_nlist] = pp_wsilver + Inv(sq);
-                //sgi_listA[sgi_nlist] = kp_bsilver + convertedsq;
-                //sgi_listB[sgi_nlist] = kp_wsilver + Inv(convertedsq);
                 score += kkp[sq_bk0][sq_wk0][kkp_silver + convertedsq];
-                //score += PcOnSq(sq_bk0, kp_bsilver + sq);
-                //score -= PcOnSq(sq_bk1, kp_wsilver + Inv(sq));
-                //sgi_nlist += 1;
                 listA[nlist] = kp_bsilver + convertedsq;
                 listB[nlist] = kp_wsilver + Inv(convertedsq);
                 nlist++;
                 break;
             case GGI:
-                //ggi_list0[ggi_nlist] = pp_wsilver + sq;
-                //ggi_list1[ggi_nlist] = pp_bsilver + Inv(sq);
-                //ggi_listA[ggi_nlist] = kp_wsilver + convertedsq;
-                //ggi_listB[ggi_nlist] = kp_bsilver + Inv(convertedsq);
                 score -= kkp[sq_bk1][sq_wk1][kkp_silver + Inv(convertedsq)];
-                //score += PcOnSq(sq_bk0, kp_wknight + sq);
-                //score -= PcOnSq(sq_bk1, kp_bknight + Inv(sq));
-                //ggi_nlist += 1;
                 listA[nlist] = kp_wsilver + convertedsq;
                 listB[nlist] = kp_bsilver + Inv(convertedsq);
                 nlist++;
@@ -747,14 +592,7 @@ int Position::make_list(int * pscore,/* int list0[NLIST], int list1[NLIST],*/ in
             case SNY:
             case SNK:
             case SNG:
-                //ski_list0[ski_nlist] = pp_bgold + sq;
-                //ski_list1[ski_nlist] = pp_wgold + Inv(sq);
-                //ski_listA[ski_nlist] = kp_bgold + convertedsq;
-                //ski_listB[ski_nlist] = kp_wgold + Inv(convertedsq);
                 score += kkp[sq_bk0][sq_wk0][kkp_gold + convertedsq];
-                //score += PcOnSq(sq_bk0, kp_bgold + sq);
-                //score -= PcOnSq(sq_bk1, kp_wgold + Inv(sq));
-                //ski_nlist += 1;
                 listA[nlist] = kp_bgold + convertedsq;
                 listB[nlist] = kp_wgold + Inv(convertedsq);
                 nlist++;
@@ -764,118 +602,57 @@ int Position::make_list(int * pscore,/* int list0[NLIST], int list1[NLIST],*/ in
             case GNY:
             case GNK:
             case GNG:
-                //gki_list0[gki_nlist] = pp_wgold + sq;
-                //gki_list1[gki_nlist] = pp_bgold + Inv(sq);
-                //gki_listA[gki_nlist] = kp_wgold + convertedsq;
-                //gki_listB[gki_nlist] = kp_bgold + Inv(convertedsq);
                 score -= kkp[sq_bk1][sq_wk1][kkp_gold + Inv(convertedsq)];
-                //score += PcOnSq(sq_bk0, kp_wgold + sq);
-                //score -= PcOnSq(sq_bk1, kp_bgold + Inv(sq));
-                //gki_nlist += 1;
                 listA[nlist] = kp_wgold + convertedsq;
                 listB[nlist] = kp_bgold + Inv(convertedsq);
                 nlist++;
                 break;
             case SKA:
-                //ska_list0[ska_nlist] = pp_bbishop + sq;
-                //ska_list1[ska_nlist] = pp_wbishop + Inv(sq);
-                //ska_listA[ska_nlist] = kp_bbishop + convertedsq;
-                //ska_listB[ska_nlist] = kp_wbishop + Inv(convertedsq);
                 score += kkp[sq_bk0][sq_wk0][kkp_bishop + convertedsq];
-                //score += PcOnSq(sq_bk0, kp_bbishop + sq);
-                //score -= PcOnSq(sq_bk1, kp_wbishop + Inv(sq));
-                //ska_nlist += 1;
                 listA[nlist] = kp_bbishop + convertedsq;
                 listB[nlist] = kp_wbishop + Inv(convertedsq);
                 nlist++;
                 break;
             case GKA:
-                //gka_list0[gka_nlist] = pp_wbishop + sq;
-                //gka_list1[gka_nlist] = pp_bbishop + Inv(sq);
-                //gka_listA[gka_nlist] = kp_wbishop + convertedsq;
-                //gka_listB[gka_nlist] = kp_bbishop + Inv(convertedsq);
                 score -= kkp[sq_bk1][sq_wk1][kkp_bishop + Inv(convertedsq)];
-                //score += PcOnSq(sq_bk0, kp_wbishop + sq);
-                //score -= PcOnSq(sq_bk1, kp_bbishop + Inv(sq));
-                //gka_nlist += 1;
                 listA[nlist] = kp_wbishop + convertedsq;
                 listB[nlist] = kp_bbishop + Inv(convertedsq);
                 nlist++;
                 break;
             case SHI:
-                //shi_list0[shi_nlist] = pp_brook + sq;
-                //shi_list1[shi_nlist] = pp_wrook + Inv(sq);
-                //shi_listA[shi_nlist] = kp_brook + convertedsq;
-                //shi_listB[shi_nlist] = kp_wrook + Inv(convertedsq);
                 score += kkp[sq_bk0][sq_wk0][kkp_rook + convertedsq];
-                //score += PcOnSq(sq_bk0, kp_brook + sq);
-                //score -= PcOnSq(sq_bk1, kp_wrook + Inv(sq));
-                //shi_nlist += 1;
                 listA[nlist] = kp_brook + convertedsq;
                 listB[nlist] = kp_wrook + Inv(convertedsq);
                 nlist++;
                 break;
             case GHI:
-                //ghi_list0[ghi_nlist] = pp_wrook + sq;
-                //ghi_list1[ghi_nlist] = pp_brook + Inv(sq);
-                //ghi_listA[ghi_nlist] = kp_wrook + convertedsq;
-                //ghi_listB[ghi_nlist] = kp_brook + Inv(convertedsq);
                 score -= kkp[sq_bk1][sq_wk1][kkp_rook + Inv(convertedsq)];
-                //score += PcOnSq(sq_bk0, kp_wrook + sq);
-                //score -= PcOnSq(sq_bk1, kp_brook + Inv(sq));
-                //ghi_nlist += 1;
                 listA[nlist] = kp_wrook + convertedsq;
                 listB[nlist] = kp_brook + Inv(convertedsq);
                 nlist++;
                 break;
             case SUM:
-                //sum_list0[sum_nlist] = pp_bhorse + sq;
-                //sum_list1[sum_nlist] = pp_whorse + Inv(sq);
-                //sum_listA[sum_nlist] = kp_bhorse + convertedsq;
-                //sum_listB[sum_nlist] = kp_whorse + Inv(convertedsq);
                 score += kkp[sq_bk0][sq_wk0][kkp_horse + convertedsq];
-                //score += PcOnSq(sq_bk0, kp_bhorse + sq);
-                //score -= PcOnSq(sq_bk1, kp_whorse + Inv(sq));
-                //sum_nlist += 1;
                 listA[nlist] = kp_bhorse + convertedsq;
                 listB[nlist] = kp_whorse + Inv(convertedsq);
                 nlist++;
                 break;
             case GUM:
-                //gum_list0[gum_nlist] = pp_whorse + sq;
-                //gum_list1[gum_nlist] = pp_bhorse + Inv(sq);
-                //gum_listA[gum_nlist] = kp_whorse + convertedsq;
-                //gum_listB[gum_nlist] = kp_bhorse + Inv(convertedsq);
                 score -= kkp[sq_bk1][sq_wk1][kkp_horse + Inv(convertedsq)];
-                //score += PcOnSq(sq_bk0, kp_wbishop + sq);
-                //score -= PcOnSq(sq_bk1, kp_bbishop + Inv(sq));
-                //gum_nlist += 1;
                 listA[nlist] = kp_whorse + convertedsq;
                 listB[nlist] = kp_bhorse + Inv(convertedsq);
                 nlist++;
                 break;
             case SRY:
-                //sry_list0[sry_nlist] = pp_bdragon + sq;
-                //sry_list1[sry_nlist] = pp_wdragon + Inv(sq);
-                //sry_listA[sry_nlist] = kp_bdragon + convertedsq;
-                //sry_listB[sry_nlist] = kp_wdragon + Inv(convertedsq);
                 score += kkp[sq_bk0][sq_wk0][kkp_dragon + convertedsq];
-                //score += PcOnSq(sq_bk0, kp_bdragon + sq);
-                //score -= PcOnSq(sq_bk1, kp_wdragon + Inv(sq));
-                //sry_nlist += 1;
-                listA[nlist] = kp_bhorse + convertedsq;
-                listB[nlist] = kp_whorse + Inv(convertedsq);
+                /*listA[nlist] = kp_bhorse + convertedsq;
+                listB[nlist] = kp_whorse + Inv(convertedsq);*/
+                listA[nlist] = kp_bdragon + convertedsq;
+                listB[nlist] = kp_wdragon + Inv(convertedsq);
                 nlist++;
                 break;
             case GRY:
-                //gry_list0[gry_nlist] = pp_wdragon + sq;
-                //gry_list1[gry_nlist] = pp_bdragon + Inv(sq);
-                //gry_listA[gry_nlist] = kp_wdragon + convertedsq;
-                //gry_listB[gry_nlist] = kp_bdragon + Inv(convertedsq);
                 score -= kkp[sq_bk1][sq_wk1][kkp_dragon + Inv(convertedsq)];
-                //score += PcOnSq(sq_bk0, kp_wbishop + sq);
-                //score -= PcOnSq(sq_bk1, kp_bbishop + Inv(sq));
-                //gry_nlist += 1;
                 listA[nlist] = kp_wdragon + convertedsq;
                 listB[nlist] = kp_bdragon + Inv(convertedsq);
                 nlist++;
@@ -895,190 +672,7 @@ int Position::make_list(int * pscore,/* int list0[NLIST], int list1[NLIST],*/ in
         Print();
         MYABORT();
     }
-#endif    //#if defined(CHK_DETAIL)
-    //int nlist  =  0;
-
-    //int nlist = NPiece;
-    //int n2 = 0;
-    //int list2[34];
-    //// SFU
-    //for (i = 0; i < sfu_nlist; i++, nlist++) {
-    //    //list0[nlist] = sfu_list0[i];
-    //    //list1[nlist] = sfu_list1[i];
-    //    listA[nlist /*+ NPiece*/ ] = sfu_listA[i];
-    //    list2[n2] = sfu_listB[i];
-    //    n2++;
-    //}
-
-    //// GFU
-    //for (i = 0; i < gfu_nlist; i++, nlist++) {
-    //    //list0[nlist] = gfu_list0[i];
-    //    //list1[nlist] = gfu_list1[i];
-    //    listA[nlist /*+ NPiece*/] = gfu_listA[i];
-    //    list2[n2] = gfu_listB[i];
-    //    n2++;
-    //}
-    //for (i = 0; i < n2; i++) { listB[nlist /*+ NPiece*/ - i - 1] = list2[i]; }
-
-    //n2 = 0;
-    //// SKY
-    //for (i = 0; i < sky_nlist; i++, nlist++) {
-    //    //list0[nlist] = sky_list0[i];
-    //    //list1[nlist] = sky_list1[i];
-    //    listA[nlist /*+ NPiece*/] = sky_listA[i];
-    //    list2[n2] = sky_listB[i];
-    //    n2++;
-    //}
-
-    //// GKY
-    //for (i = 0; i < gky_nlist; i++, nlist++) {
-    //    //list0[nlist] = gky_list0[i];
-    //    //list1[nlist] = gky_list1[i];
-    //    listA[nlist /*+ NPiece*/] = gky_listA[i];
-    //    list2[n2] = gky_listB[i];
-    //    n2++;
-    //}
-    //for (i = 0; i < n2; i++) { listB[nlist /*+ NPiece*/ - i - 1] = list2[i]; }
-    //
-    //n2 = 0;
-    //// SKE
-    //for (i = 0; i < ske_nlist; i++, nlist++) {
-    //    //list0[nlist] = ske_list0[i];
-    //    //list1[nlist] = ske_list1[i];
-    //    listA[nlist /*+ NPiece*/] = ske_listA[i];
-    //    list2[n2] = ske_listB[i];
-    //    n2++;
-    //}
-
-    //// GKE
-    //for (i = 0; i < gke_nlist; i++, nlist++) {
-    //    //list0[nlist] = gke_list0[i];
-    //    //list1[nlist] = gke_list1[i];
-    //    listA[nlist /*+ NPiece*/] = gke_listA[i];
-    //    list2[n2] = gke_listB[i];
-    //    n2++;
-    //}
-    //for (i = 0; i < n2; i++) { listB[nlist /*+ NPiece*/ - i - 1] = list2[i]; }
-    //
-    //n2 = 0;
-    //// SGI
-    //for (i = 0; i < sgi_nlist; i++, nlist++) {
-    //    //list0[nlist] = sgi_list0[i];
-    //    //list1[nlist] = sgi_list1[i];
-    //    listA[nlist /*+ NPiece*/] = sgi_listA[i];
-    //    list2[n2] = sgi_listB[i];
-    //    n2++;
-    //}
-
-    //// GGI
-    //for (i = 0; i < ggi_nlist; i++, nlist++) {
-    //    //list0[nlist] = ggi_list0[i];
-    //    //list1[nlist] = ggi_list1[i];
-    //    listA[nlist /*+ NPiece*/] = ggi_listA[i];
-    //    list2[n2] = ggi_listB[i];
-    //    n2++;
-    //}
-    //for (i = 0; i < n2; i++) { listB[nlist /*+ NPiece*/ - i - 1] = list2[i]; }
-    //
-    //n2 = 0;
-    //// SKI
-    //for (i = 0; i < ski_nlist; i++, nlist++) {
-    //    //list0[nlist] = ski_list0[i];
-    //    //list1[nlist] = ski_list1[i];
-    //    listA[nlist /*+ NPiece*/] = ski_listA[i];
-    //    list2[n2] = ski_listB[i];
-    //    n2++;
-    //}
-
-    //// GKI
-    //for (i = 0; i < gki_nlist; i++, nlist++) {
-    //    //list0[nlist] = gki_list0[i];
-    //    //list1[nlist] = gki_list1[i];
-    //    listA[nlist /*+ NPiece*/] = gki_listA[i];
-    //    list2[n2] = gki_listB[i];
-    //    n2++;
-    //}
-    //for (i = 0; i < n2; i++) { listB[nlist /*+ NPiece*/ - i - 1] = list2[i]; }
-
-    //n2 = 0;
-    //// SKA
-    //for (i = 0; i < ska_nlist; i++, nlist++) {
-    //    //list0[nlist] = ska_list0[i];
-    //    //list1[nlist] = ska_list1[i];
-    //    listA[nlist /*+ NPiece*/] = ska_listA[i];
-    //    list2[n2] = ska_listB[i];
-    //    n2++;
-    //}
-
-    //// GKA
-    //for (i = 0; i < gka_nlist; i++, nlist++) {
-    //    //list0[nlist] = gka_list0[i];
-    //    //list1[nlist] = gka_list1[i];
-    //    listA[nlist /*+ NPiece*/] = gka_listA[i];
-    //    list2[n2] = gka_listB[i];
-    //    n2++;
-    //}
-    //for (i = 0; i < n2; i++) { listB[nlist /*+ NPiece*/ - i - 1] = list2[i]; }
-    //
-    //n2 = 0;
-    //// SUM
-    //for (i = 0; i < sum_nlist; i++, nlist++) {
-    //    //list0[nlist] = sum_list0[i];
-    //    //list1[nlist] = sum_list1[i];
-    //    listA[nlist /*+ NPiece*/] = sum_listA[i];
-    //    list2[n2] = sum_listB[i];
-    //    n2++;
-    //}
-
-    //// GUM
-    //for (i = 0; i < gum_nlist; i++, nlist++) {
-    //    //list0[nlist] = gum_list0[i];
-    //    //list1[nlist] = gum_list1[i];
-    //    listA[nlist /*+ NPiece*/] = gum_listA[i];
-    //    list2[n2] = gum_listB[i];
-    //    n2++;
-    //}
-    //for (i = 0; i < n2; i++) { listB[nlist /*+ NPiece*/ - i - 1] = list2[i]; }
-    //
-    //n2 = 0;
-    //// SHI
-    //for (i = 0; i < shi_nlist; i++, nlist++) {
-    //    //list0[nlist] = shi_list0[i];
-    ////    list1[nlist] = shi_list1[i];
-    //    listA[nlist /*+ NPiece*/] = shi_listA[i];
-    //    list2[n2] = shi_listB[i];
-    //    n2++;
-    //}
-    //// GHI
-    //for (i = 0; i < ghi_nlist; i++, nlist++) {
-    //    //list0[nlist] = ghi_list0[i];
-    //    //list1[nlist] = ghi_list1[i];
-    //    listA[nlist /*+ NPiece*/] = ghi_listA[i];
-    //    list2[n2] = ghi_listB[i];
-    //    n2++;
-    //}
-    //for (i = 0; i < n2; i++) { listB[nlist /*+ NPiece*/ - i - 1] = list2[i]; }
-    //
-    //n2 = 0;
-    //// SRY
-    //for (i = 0; i < sry_nlist; i++, nlist++) {
-    //    //list0[nlist] = sry_list0[i];
-    //    //list1[nlist] = sry_list1[i];
-    //    listA[nlist /*+ NPiece*/] = sry_listA[i];
-    //    list2[n2] = sry_listB[i];
-    //    n2++;
-    //}
-
-    //// GRY
-    //for (i = 0; i < gry_nlist; i++, nlist++) {
-    //    //list0[nlist] = gry_list0[i];
-    //    //list1[nlist] = gry_list1[i];
-    //    listA[nlist /*+ NPiece*/] = gry_listA[i];
-    //    list2[n2] = gry_listB[i];
-    //    n2++;
-    //}
-    //for (i = 0; i < n2; i++) { listB[nlist /*+ NPiece*/ - i - 1] = list2[i]; }
-
+#endif
     assert( nlist <= NLIST2 );
 
     *pscore += score;
@@ -1097,123 +691,10 @@ int Position::evaluate(const Color us) const
     sum = 0;
     sq_bk = SQ_BKING;
     sq_wk = Inv( SQ_WKING );
-    /*
-    sum += fv_kp[sq_bk][kp_hand_bpawn   + I2HandPawn(HAND_B)];
-    sum += fv_kp[sq_bk][kp_hand_wpawn   + I2HandPawn(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_bpawn   + I2HandPawn(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_wpawn   + I2HandPawn(HAND_B)];
-
-    sum += fv_kp[sq_bk][kp_hand_blance  + I2HandLance(HAND_B)];
-    sum += fv_kp[sq_bk][kp_hand_wlance  + I2HandLance(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_blance  + I2HandLance(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_wlance  + I2HandLance(HAND_B)];
-
-    sum += fv_kp[sq_bk][kp_hand_bknight + I2HandKnight(HAND_B)];
-    sum += fv_kp[sq_bk][kp_hand_wknight + I2HandKnight(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_bknight + I2HandKnight(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_wknight + I2HandKnight(HAND_B)];
-
-    sum += fv_kp[sq_bk][kp_hand_bsilver + I2HandSilver(HAND_B)];
-    sum += fv_kp[sq_bk][kp_hand_wsilver + I2HandSilver(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_bsilver + I2HandSilver(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_wsilver + I2HandSilver(HAND_B)];
-
-    sum += fv_kp[sq_bk][kp_hand_bgold   + I2HandGold(HAND_B)];
-    sum += fv_kp[sq_bk][kp_hand_wgold   + I2HandGold(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_bgold   + I2HandGold(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_wgold   + I2HandGold(HAND_B)];
-
-    sum += fv_kp[sq_bk][kp_hand_bbishop + I2HandBishop(HAND_B)];
-    sum += fv_kp[sq_bk][kp_hand_wbishop + I2HandBishop(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_bbishop + I2HandBishop(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_wbishop + I2HandBishop(HAND_B)];
-
-    sum += fv_kp[sq_bk][kp_hand_brook   + I2HandRook(HAND_B)];
-    sum += fv_kp[sq_bk][kp_hand_wrook   + I2HandRook(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_brook   + I2HandRook(HAND_W)];
-    sum -= fv_kp[sq_wk][kp_hand_wrook   + I2HandRook(HAND_B)];
-    */
-
-
-    /*listA[0] = kp_hand_bpawn + I2HandPawn(HAND_B);
-    listA[1] = kp_hand_wpawn + I2HandPawn(HAND_W);
-    listA[2] = kp_hand_blance + I2HandLance(HAND_B);
-    listA[3] = kp_hand_wlance + I2HandLance(HAND_W);
-    listA[4] = kp_hand_bknight + I2HandKnight(HAND_B);
-    listA[5] = kp_hand_wknight + I2HandKnight(HAND_W);
-    listA[6] = kp_hand_bsilver + I2HandSilver(HAND_B);
-    listA[7] = kp_hand_wsilver + I2HandSilver(HAND_W);
-    listA[8] = kp_hand_bgold + I2HandGold(HAND_B);
-    listA[9] = kp_hand_wgold + I2HandGold(HAND_W);
-    listA[10] = kp_hand_bbishop + I2HandBishop(HAND_B);
-    listA[11] = kp_hand_wbishop + I2HandBishop(HAND_W);
-    listA[12] = kp_hand_brook + I2HandRook(HAND_B);
-    listA[13] = kp_hand_wrook + I2HandRook(HAND_W);
-
-    listB[0] = kp_hand_bpawn + I2HandPawn(HAND_W);
-    listB[1] = kp_hand_wpawn + I2HandPawn(HAND_B);
-    listB[2] = kp_hand_blance + I2HandLance(HAND_W);
-    listB[3] = kp_hand_wlance + I2HandLance(HAND_B);
-    listB[4] = kp_hand_bknight + I2HandKnight(HAND_W);
-    listB[5] = kp_hand_wknight + I2HandKnight(HAND_B);
-    listB[6] = kp_hand_bsilver + I2HandSilver(HAND_W);
-    listB[7] = kp_hand_wsilver + I2HandSilver(HAND_B);
-    listB[8] = kp_hand_bgold + I2HandGold(HAND_W);
-    listB[9] = kp_hand_wgold + I2HandGold(HAND_B);
-    listB[10] = kp_hand_bbishop + I2HandBishop(HAND_W);
-    listB[11] = kp_hand_wbishop + I2HandBishop(HAND_B);
-    listB[12] = kp_hand_brook + I2HandRook(HAND_W);
-    listB[13] = kp_hand_wrook + I2HandRook(HAND_B);*/
 
     score = 0;
     nlist2 = make_list( &score,/* list0, list1 ,*/listA,listB);
     
-	//PP-nanoha
-	/**/
-    /*for ( i = 0; list0[i] < pp_bend; i++ )/
-    {
-        assert(i < nlist2);
-        k0 = list0[i];
-        for ( j = i+1; j < nlist2; j++ )
-        {
-            l0 = list0[j];
-            sum += PcPcOn( k0, l0 );
-        }
-    }
-
-    for ( ; i < nlist2; i++ )
-    {
-        k1 = list1i];
-        assert(k1 < pp_bend);
-        for ( j = i+1; j < nlist2; j++ )
-        {
-            l1 = list1[j];
-            sum -= PcPcOn( k1, l1 );
-        }
-    }*/
-
-    /*KPP*/
-    //int nlist2 =  nlist + 14;
-
-    /*for (i = 0; i < nlist2 ; i++)
-    {
-        k0 = listA[i];
-        k1 = listB[i];
-        for (j = 0; j <= i; j++)
-        {
-            
-            l0 = listA[j];
-            l1 = listB[j];
-            assert(k0 >= l0 && k1 >= l1);
-            sum += PcPcOnSq(sq_bk, k0, l0);
-            sum -= PcPcOnSq(sq_wk, k1, l1);
-            
-        }
-    }*/
-
-	
-	
-
     /*KPP*/
     for (i = 0; i < nlist2; i++)
     {
@@ -1225,19 +706,12 @@ int Position::evaluate(const Color us) const
             l1 = listB[j];
             sum += PcPcOnSq2(sq_bk, k0, l0);
             sum -= PcPcOnSq2(sq_wk, k1, l1);
-
-			/*PP ??? */
-			/*sum += fv_pp[k0][l0];
-			sum -= fv_pp[k1][l1];*/
         }
     }
 
-
     score += sum;
     score /= FV_SCALE;
-
     score += MATERIAL;
-
     score = (us == BLACK) ? score : -score;
 
     return score;
