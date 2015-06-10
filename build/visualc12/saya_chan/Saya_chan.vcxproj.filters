@@ -143,5 +143,8 @@
     <ClInclude Include="..\..\..\src\saya_chan\rkiss.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\saya_chan\param_new.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
