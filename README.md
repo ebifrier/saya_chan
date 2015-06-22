@@ -3,6 +3,11 @@
 これはWCSC25に出場した大合神クジラちゃんのクライアントソフトです。
 ソースの一部を使用するとUSIで動く沙夜ちゃんとしてコンパイルできます。
 
+### バイナリファイル ###
+
+windows用のバイナリファイルはこちらにあります。
+http://garnet-alice.net/programs/shogiengine/saya_chan/index.html
+
 ### ビルドと実行方法 ###
 
 1. cd src/client
