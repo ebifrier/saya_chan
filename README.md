@@ -5,7 +5,7 @@
 
 ### バイナリファイル ###
 
-windows用のバイナリファイルはこちらにあります。  
+沙夜ちゃん単体のwindows用バイナリファイルはこちらになります。  
 http://garnet-alice.net/programs/shogiengine/saya_chan/index.html
 
 ### ビルドと実行方法 ###
