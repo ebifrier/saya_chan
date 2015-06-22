@@ -6,6 +6,7 @@
 ### バイナリファイル ###
 
 windows用のバイナリファイルはこちらにあります。
+
 http://garnet-alice.net/programs/shogiengine/saya_chan/index.html
 
 ### ビルドと実行方法 ###
