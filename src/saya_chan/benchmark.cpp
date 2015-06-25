@@ -111,7 +111,7 @@ void benchmark(int argc, char* argv[]) {
     int time;
 
     // Assign default values to missing arguments
-    string ttSize  = argc > 2 ? argv[2] : "128";
+    string ttSize  = argc > 2 ? argv[2] : "512";
     string threads = argc > 3 ? argv[3] : "1";
     string valStr  = argc > 4 ? argv[4] : "12";
     string fenFile = argc > 5 ? argv[5] : "default";

@@ -921,6 +921,7 @@ namespace {
             if (m != MOVE_NONE) {
                 return value_mate_in(ss->ply);
             }*/
+
             Move m = MOVE_NONE;
             int val = pos.Mate3(pos.side_to_move(), m);
             if (val == VALUE_MATE) {

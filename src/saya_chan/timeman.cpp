@@ -128,7 +128,7 @@ void TimeManager::init(const SearchLimits& limits, int currentPly)
                    + limits.increment * (hypMTG - 1)
                    - emergencyBaseTime
                    - emergencyMoveTime * Min(hypMTG, emergencyMoveHorizon)
-                   + limits.maxTime * hypMTG / 1.5 ;//2で割ってるのはなんとなく秒読み感を出すため、後述のslowMoverとバランスを取る
+                   + (int)(limits.maxTime * hypMTG / 1.5);//2で割ってるのはなんとなく秒読み感を出すため、後述のslowMoverとバランスを取る
 
         hypMyTime = Max(hypMyTime, 0);
 
