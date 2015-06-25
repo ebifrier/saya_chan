@@ -83,7 +83,7 @@ OptionsMap::OptionsMap() {
     o["Ponder"] = UCIOption(true);
 #endif
     o["Threads"] = UCIOption(1, 1, MAX_THREADS);
-    o["Hash"] = UCIOption(256, 4, 1024);
+    o["Hash"] = UCIOption(256, 4, 8192);
 
     o["Use Search Log"] = UCIOption(false);
     o["Search Log Filename"] = UCIOption("SearchLog.txt");
@@ -108,7 +108,7 @@ OptionsMap::OptionsMap() {
     // 引き分け(千日手)の点数
     o["DrawValue"] = UCIOption(-20000/*0*/, -30000, 30000);
     o["Output_AllDepth"] = UCIOption(false);
-    o["ByoyomiMargin"] = UCIOption(100, 0, 3000);
+    o["ByoyomiMargin"] = UCIOption(200, 0, 3000);
 #endif
 
     // Set some SMP parameters accordingly to the detected CPU count
