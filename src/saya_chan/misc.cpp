@@ -66,7 +66,7 @@ static const string AppName = "Saya_chan";
 static const string EngineVersion = "0.0.8"/*"0.2.1.1"*/;
 #elif defined(SAYA)
 static const string AppName = "Saya_chan";
-static const string EngineVersion = "0.1.0.5-4i-NO_NARAZU";
+static const string EngineVersion = "0.1.0.7-4i";
 #else
 static const string AppName = "NanohaMini";
 static const string EngineVersion = "0.2.1.1b";
