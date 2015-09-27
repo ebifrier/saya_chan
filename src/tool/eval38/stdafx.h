@@ -19,7 +19,7 @@
 
 #define PcOnSq(k,i)         pc_on_sq[k][(i)*((i)+3)/2]
 #define PcPcOnSq(k,i,j)     pc_on_sq[k][(i)*((i)+1)/2+(j)]
-#define PcPcOnSq2(k,i,j)    pc_on_sq2[k][i * fe_end + j]
+#define PcPcOnSq2(k,i,j)    pc_on_sq2[k][(i) * fe_end + (j)]
 
 enum {
     f_hand_pawn = 0,

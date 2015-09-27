@@ -96,7 +96,7 @@ enum FVIndex {
     kkp_rook        = 576,
     kkp_dragon      = 657,
     kkp_end         = 738,
-    pos_n           = fe_end * ( fe_end + 1 ) / 2
+    pos_n           = (int)fe_end * ((int)fe_end + 1) / 2
 };
 OverloadEnumOperators(FVIndex);
 
@@ -143,15 +143,15 @@ typedef int16_t OutKPPType;
 typedef int16_t OutKKPType;
 typedef int16_t OutKKType;
 
-KPPType pc_on_sq[nsquare][fe_end*(fe_end+1)/2];
+KPPType pc_on_sq[nsquare][(int)fe_end*((int)fe_end + 1) / 2];
 KKPType kkp[nsquare][nsquare][kkp_end];
 
-MidKPPType mid_pc_on_sq[nsquare][fe_end*(fe_end+1)/2];
+MidKPPType mid_pc_on_sq[nsquare][(int)fe_end*((int)fe_end + 1) / 2];
 MidKKPType mid_kkp[nsquare][nsquare][kkp_end];
 MidKKPType mid_new_kkp[nsquare][nsquare][fe_end];
 MidKKType  mid_kk[nsquare][nsquare];
 
-OutKPPType out_pc_on_sq[nsquare][fe_end*(fe_end+1)/2];
+OutKPPType out_pc_on_sq[nsquare][(int)fe_end*((int)fe_end + 1) / 2];
 OutKKPType out_kkp[nsquare][nsquare][kkp_end];
 //OutKKPType out_new_kkp[nsquare][nsquare][fe_end];
 OutKKType  out_kk[nsquare][nsquare];

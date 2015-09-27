@@ -3,7 +3,10 @@
 
 #include "stdafx.h"
 
-
+short pc_on_sq[nsquare][pos_n];
+short kkp[nsquare][nsquare][kkp_end];
+short pc_on_sq2[nsquare][pos_n * 2];
+short kk[nsquare][nsquare];
 
 FILE * file_open(const char *str_file, const char *str_mode);
 int file_close(FILE *pf);
@@ -15,14 +18,6 @@ int main(void)
     FILE *pf2;
     size_t size;
     int iret;
-
-    short pc_on_sq[nsquare][pos_n];
-    
-    short kkp[nsquare][nsquare][kkp_end];
-
-    short pc_on_sq2[nsquare][pos_n * 2];
-	
-	short kk[nsquare][nsquare];
 
     pf = file_open("fv38.bin", "rb");
     if (pf == NULL) { return -2; }
@@ -78,7 +73,6 @@ int main(void)
         };
     };
     printf("KPP代入成功\n");
-    
 
     //KPP書き込み
     size = nsquare * pos_n * 2;
@@ -97,7 +91,7 @@ int main(void)
     }
     printf("KKP書き込み成功\n");
 	//KK書き込み
-	size = nsquare * nsquare
+    size = nsquare * nsquare;
 	if (fwrite(kk, sizeof(short), size, pf2) != size)
 	{
 		//str_error = str_io_error;
