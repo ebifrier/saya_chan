@@ -1,5 +1,5 @@
-EXE = saya_chan.exe
-COMP=gcc
+EXE  = saya_chan
+COMP = gcc
 
 ### Built-in benchmark for pgo-builds
 PGOBENCH = ./$(EXE) bench 32 1 10 default depth
@@ -143,7 +143,7 @@ WARNFLAGS =
 #	-Wsequence-point -Wsign-conversion -Wsign-promo -Wswitch -Wswitch-default -Wswitch-enum
 #CXXFLAGS = -g -Wall $(WARNFLAGS) -fno-exceptions -fno-rtti $(EXTRACXXFLAGS) -DEVAL_OLD -DNANOHA -DCHK_PERFORM -DPROMOTE_AS_CAPTURE
 #CXXFLAGS = -O3 -DNDEBUG -Wall $(WARNFLAGS) -fno-exceptions -fno-rtti $(EXTRACXXFLAGS) -DEVAL_OLD -DNANOHA -DCHK_PERFORM -DPROMOTE_AS_CAPTURE
-CXXFLAGS =-march=native -mtune=native -Ofast -DNDEBUG -Wall $(WARNFLAGS) -fno-exceptions -fno-rtti $(EXTRACXXFLAGS) -DEVAL_OLD -DNANOHA -DCHK_PERFORM -DPROMOTE_AS_CAPTURE
+CXXFLAGS =-march=native -mtune=native -Ofast -DNDEBUG -Wall $(WARNFLAGS) -fno-exceptions -fno-rtti $(EXTRACXXFLAGS) -DNANOHA -DSAYA -DNO_NARAZU -DCHK_PERFORM
 
 ifeq ($(comp),gcc)
 	CXXFLAGS += -ansi -pedantic -Wno-long-long -Wextra -Wshadow

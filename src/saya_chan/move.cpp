@@ -97,7 +97,7 @@ namespace {
 
         return PIECE_TYPE_NONE;
     }
-};
+}
 
 ///
 /// @brief 指し手をSFEN形式の文字列に変換します。

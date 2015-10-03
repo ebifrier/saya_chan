@@ -183,7 +183,7 @@ namespace NanohaTbl {
         EMP, GFU, GKY, GKE, GGI, GKI, GKA, GHI,
         GOU, GKI, GKI, GKI, GKI, EMP, GUM, GRY,
     };
-};
+}
 
 static FILE *fp_info = stdout;
 static FILE *fp_log = NULL;
@@ -2292,7 +2292,7 @@ int set_bit(const int start_bit, const int bits, const int data, unsigned char b
     }
     return start_bit + bits;
 }
-};
+}
 
 // 機能：局面をハフマン符号化する(定跡ルーチン用)
 //

@@ -238,7 +238,7 @@ enum PieceType {
     NK = KE | PROMOTED,
     NG = GI | PROMOTED,
     UM = KA | PROMOTED,
-    RY = HI | PROMOTED,
+    RY = HI | PROMOTED
 };
 
 enum Piece {

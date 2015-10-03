@@ -1868,7 +1868,9 @@ int Position::see(Move m) const {
     int tKind = is_promotion(m) ? Piece(fKind | PROMOTED) : fKind;
     int cap = move_captured(m) & ~GOTE;
     Color us = side_to_move();
-    int value = is_promotion(m) ? NanohaTbl::KomaValuePro[fKind] + NanohaTbl::KomaValueEx[cap] : NanohaTbl::KomaValueEx[cap]; // = (promote + capture) value
+    int value = is_promotion(m) ?
+        NanohaTbl::KomaValuePro[fKind] + NanohaTbl::KomaValueEx[cap] :
+        NanohaTbl::KomaValueEx[cap]; // = (promote + capture) value
 
     //
     const effect_t *dKiki = (us == BLACK) ? effectW : effectB;
