@@ -154,7 +154,7 @@ namespace {
     template<TimeType T>
     int remaining(int myTime, int movesToGo, int currentPly)
     {
-        int slowMover = 26; // かなりの終盤型だがそれっぽく時間を使うので18で。本来はオプションで設定する項目
+        int slowMover = 30; // かなりの終盤型だがそれっぽく時間を使うので18で。本来はオプションで設定する項目
         const float TMaxRatio   = (T == OptimumTime ? 1 : MaxRatio);
         const float TStealRatio = (T == OptimumTime ? 0 : StealRatio);
 

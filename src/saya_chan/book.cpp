@@ -69,7 +69,7 @@ void Book::fromJoseki(Position &pos, int &mNum, MoveStack moves[], BookEntry dat
     BookKey key;
     BookEntry d_null;
     MoveStack *last = generate<MV_LEGAL>(pos, moves);
-    mNum = last - moves;
+    mNum = static_cast<int>(last - moves);
     memset(&d_null, 0, sizeof(d_null));
 
     int i;
