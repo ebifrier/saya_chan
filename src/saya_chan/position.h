@@ -303,8 +303,8 @@ public:
 
     // 局面の評価
     static void init_evaluate();
-    int make_list(int * pscore, /*int list0[], int list1[] ,*/int listA[],int listB[]) const;
-    int evaluate(const Color us) const;
+    void make_list();
+    int evaluate(const Color us);
 
     // 稲庭判定(bInaniwa にセットするため const でない)
     bool IsInaniwa(const Color us);
@@ -529,7 +529,14 @@ private:
 #define OnBoard(x)    ((x) >= 0x11)
     int material;
     bool bInaniwa;
+#endif
 
+#if defined(NANOHA)
+    int list0[MAX_PIECENUMBER + 1]; //駒番号numのlist0
+    int list1[MAX_PIECENUMBER + 1]; //駒番号numのlist1
+
+    //PieceNumber_t listkn[90]; //list0の駒番号num
+    int I2hand[32]; //Pieceの持駒枚数
 #endif
 
     // Other info

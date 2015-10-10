@@ -559,6 +559,90 @@ enum CastleRight {
 };
 #endif
 
+
+enum { nhand = 7, nfile = 9, nrank = 9, nsquare = 81 };
+
+enum KPP{
+    none = 0,
+    f_hand_pawn = 0, // 0
+    e_hand_pawn = f_hand_pawn + 19,
+    f_hand_lance = e_hand_pawn + 19,
+    e_hand_lance = f_hand_lance + 5,
+    f_hand_knight = e_hand_lance + 5,
+    e_hand_knight = f_hand_knight + 5,
+    f_hand_silver = e_hand_knight + 5,
+    e_hand_silver = f_hand_silver + 5,
+    f_hand_gold = e_hand_silver + 5,
+    e_hand_gold = f_hand_gold + 5,
+    f_hand_bishop = e_hand_gold + 5,
+    e_hand_bishop = f_hand_bishop + 3,
+    f_hand_rook = e_hand_bishop + 3,
+    e_hand_rook = f_hand_rook + 3,
+    fe_hand_end = e_hand_rook + 3,
+
+    f_pawn = fe_hand_end,
+    e_pawn = f_pawn + 81,
+    f_lance = e_pawn + 81,
+    e_lance = f_lance + 81,
+    f_knight = e_lance + 81,
+    e_knight = f_knight + 81,
+    f_silver = e_knight + 81,
+    e_silver = f_silver + 81,
+    f_gold = e_silver + 81,
+    e_gold = f_gold + 81,
+    f_bishop = e_gold + 81,
+    e_bishop = f_bishop + 81,
+    f_horse = e_bishop + 81,
+    e_horse = f_horse + 81,
+    f_rook = e_horse + 81,
+    e_rook = f_rook + 81,
+    f_dragon = e_rook + 81,
+    e_dragon = f_dragon + 81,
+    fe_end = e_dragon + 81
+};
+
+//pieceをkppのindexに変換
+const KPP aikpp0[32] = {
+    none, f_pawn, f_lance, f_knight, f_silver, f_gold, f_bishop, f_rook,
+    none, f_gold, f_gold, f_gold, f_gold, none, f_horse, f_dragon,
+    none, e_pawn, e_lance, e_knight, e_silver, e_gold, e_bishop, e_rook,
+    none, e_gold, e_gold, e_gold, e_gold, none, e_horse, e_dragon
+};
+//pieceをkppのindexに変換
+const KPP aikpp1[32] = {
+    none, e_pawn, e_lance, e_knight, e_silver, e_gold, e_bishop, e_rook,
+    none, e_gold, e_gold, e_gold, e_gold, none, e_horse, e_dragon,
+    none, f_pawn, f_lance, f_knight, f_silver, f_gold, f_bishop, f_rook,
+    none, f_gold, f_gold, f_gold, f_gold, none, f_horse, f_dragon
+};
+//pieceをkpp_handのindexに変換
+const KPP aihand0[32] = {
+    none, f_hand_pawn, f_hand_lance, f_hand_knight,
+    f_hand_silver, f_hand_gold, f_hand_bishop, f_hand_rook,
+    none, none, none, none, none, none, none, none,
+    none, e_hand_pawn, e_hand_lance, e_hand_knight,
+    e_hand_silver, e_hand_gold, e_hand_bishop, e_hand_rook,
+    none, none, none, none, none, none, none, none
+};
+//pieceをkpp_handのindexに変換
+const KPP aihand1[32] = {
+    none, e_hand_pawn, e_hand_lance, e_hand_knight,
+    e_hand_silver, e_hand_gold, e_hand_bishop, e_hand_rook,
+    none, none, none, none, none, none, none, none,
+    none, f_hand_pawn, f_hand_lance, f_hand_knight,
+    f_hand_silver, f_hand_gold, f_hand_bishop, f_hand_rook,
+    none, none, none, none, none, none, none, none
+};
+//駒番号numをpiecetypeに変換
+const PieceType knpt[41] = {
+    OU, OU, HI, HI, KA, KA,
+    KI, KI, KI, KI, GI, GI, GI, GI,
+    KE, KE, KE, KE, KY, KY, KY, KY,
+    FU, FU, FU, FU, FU, FU, FU, FU, FU,
+    FU, FU, FU, FU, FU, FU, FU, FU, FU
+};
+
+
 /// Score enum keeps a midgame and an endgame value in a single
 /// integer (enum), first LSB 16 bits are used to store endgame
 /// value, while upper bits are used for midgame value. Compiler

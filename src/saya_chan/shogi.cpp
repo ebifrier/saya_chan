@@ -398,6 +398,9 @@ void Position::init_position(const unsigned char board_ori[9][9], const int Moch
 
     // ピン情報の初期化
     make_pin_info();
+
+    ////listの初期化
+    make_list();
 }
 
 // ピンの状態を設定する
