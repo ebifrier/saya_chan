@@ -2073,7 +2073,8 @@ MoveStack* Position::generate_non_capture(MoveStack* mlist) const
             case RY:
                 continue;
             case KY:
-                if (((us == BLACK && move_to(tmp) != 2) || (us == WHITE && move_to(tmp) != 8))) continue;
+                if (((us == BLACK && (move_to(tmp) & 0x0F) != 2) ||
+                     (us == WHITE && (move_to(tmp) & 0x0F) != 8))) continue;
                 break;
             case KA:
                 if (!can_promotion<us>(move_to(tmp)) && !can_promotion<us>(move_from(tmp))) continue;
