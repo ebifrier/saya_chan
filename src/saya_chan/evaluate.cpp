@@ -53,40 +53,45 @@
 #define I2HandBishop(hand)  (((hand) & HAND_KA_MASK) >> HAND_KA_SHIFT)
 #define I2HandRook(hand)    (((hand) & HAND_HI_MASK) >> HAND_HI_SHIFT)
 
-enum {
-	promote = 8, EMPTY = 0,	/* VC++でemptyがぶつかるので変更 */
-	pawn, lance, knight, silver, gold, bishop, rook, king, pro_pawn,
-	pro_lance, pro_knight, pro_silver, piece_null, horse, dragon
-};
-
-#if !defined(EVAL_MICRO)
 typedef short kkp_entry[fe_end];
 short kpp3[nsquare][fe_end][fe_end];
 long kkp[nsquare][nsquare][fe_end];
 long kk[nsquare][nsquare];
-#endif
 
 namespace NanohaTbl {
     const short z2sq[] = {
-		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-		-1, 72, 73, 74, 75, 76, 77, 78, 79, 80, -1, -1, -1, -1, -1, -1,
-		-1, 63, 64, 65, 66, 67, 68, 69, 70, 71, -1, -1, -1, -1, -1, -1,
-		-1, 54, 55, 56, 57, 58, 59, 60, 61, 62, -1, -1, -1, -1, -1, -1,
-		-1, 45, 46, 47, 48, 49, 50, 51, 52, 53, -1, -1, -1, -1, -1, -1,
-		-1, 36, 37, 38, 39, 40, 41, 42, 43, 44, -1, -1, -1, -1, -1, -1,
-		-1, 27, 28, 29, 30, 31, 32, 33, 34, 35, -1, -1, -1, -1, -1, -1,
-		-1, 18, 19, 20, 21, 22, 23, 24, 25, 26, -1, -1, -1, -1, -1, -1,
-		-1,  9, 10, 11, 12, 13, 14, 15, 16, 17, -1, -1, -1, -1, -1, -1,
-		-1,  0,  1,  2,  3,  4,  5,  6,  7,  8, -1, -1, -1, -1, -1, -1,
-	};
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, 72, 73, 74, 75, 76, 77, 78, 79, 80, -1, -1, -1, -1, -1, -1,
+        -1, 63, 64, 65, 66, 67, 68, 69, 70, 71, -1, -1, -1, -1, -1, -1,
+        -1, 54, 55, 56, 57, 58, 59, 60, 61, 62, -1, -1, -1, -1, -1, -1,
+        -1, 45, 46, 47, 48, 49, 50, 51, 52, 53, -1, -1, -1, -1, -1, -1,
+        -1, 36, 37, 38, 39, 40, 41, 42, 43, 44, -1, -1, -1, -1, -1, -1,
+        -1, 27, 28, 29, 30, 31, 32, 33, 34, 35, -1, -1, -1, -1, -1, -1,
+        -1, 18, 19, 20, 21, 22, 23, 24, 25, 26, -1, -1, -1, -1, -1, -1,
+        -1,  9, 10, 11, 12, 13, 14, 15, 16, 17, -1, -1, -1, -1, -1, -1,
+        -1,  0,  1,  2,  3,  4,  5,  6,  7,  8, -1, -1, -1, -1, -1, -1,
+    };
+}
+
+namespace {
+    static const int handB[14] = {
+        f_hand_pawn, e_hand_pawn, f_hand_lance, e_hand_lance,
+        f_hand_knight, e_hand_knight, f_hand_silver, e_hand_silver,
+        f_hand_gold, e_hand_gold, f_hand_bishop, e_hand_bishop, f_hand_rook, e_hand_rook
+    };
+
+    static const int handW[14] = {
+        e_hand_pawn, f_hand_pawn, e_hand_lance, f_hand_lance,
+        e_hand_knight, f_hand_knight, e_hand_silver, f_hand_silver,
+        e_hand_gold, f_hand_gold, e_hand_bishop, f_hand_bishop, e_hand_rook, f_hand_rook
+    };
 }
 
 void Position::init_evaluate()
 {
-	int iret=0;
-#if !defined(EVAL_MICRO)
 	FILE *fp = NULL;
 	size_t size;
+    int iret = 0;
 
 	//KPP
 	do {
@@ -125,10 +130,9 @@ void Position::init_evaluate()
 	if (fp) fclose(fp);
 
 	if (iret < 0) {
-		std::cerr << "Can't load *_synthesized." << std::endl;
+		std::cerr << "Can't load '*_synthesized' file." << std::endl;
         exit(-1);
 	}
-#endif
 }
 
 int Position::compute_material() const
@@ -212,142 +216,439 @@ int Position::compute_material() const
 	return v;
 }
 
-#if !defined(EVAL_MICRO)
-void Position::make_list()
+int Position::make_list_correct(int list0[MAX_PIECENUMBER + 1],
+                                int list1[MAX_PIECENUMBER + 1]) const
 {
-    int sq, piece, hands;
+    int nlist = 0;
+    int Hand[14];
+    Hand[0] = I2HandPawn(HAND_B);
+    Hand[1] = I2HandPawn(HAND_W);
+    Hand[2] = I2HandLance(HAND_B);
+    Hand[3] = I2HandLance(HAND_W);
+    Hand[4] = I2HandKnight(HAND_B);
+    Hand[5] = I2HandKnight(HAND_W);
+    Hand[6] = I2HandSilver(HAND_B);
+    Hand[7] = I2HandSilver(HAND_W);
+    Hand[8] = I2HandGold(HAND_B);
+    Hand[9] = I2HandGold(HAND_W);
+    Hand[10] = I2HandBishop(HAND_B);
+    Hand[11] = I2HandBishop(HAND_W);
+    Hand[12] = I2HandRook(HAND_B);
+    Hand[13] = I2HandRook(HAND_W);
 
-	///初期化
-	memset(list0, 0, sizeof(list0));
-	memset(list1, 0, sizeof(list1));
-	memset(I2hand, 0, sizeof(I2hand));
-	//memset(listkn, 0, sizeof(listkn));
+    for (int i = 0; i < 14; i++){
+        const int j = Hand[i];
+        for (int k = 1; k <= j; k++){
+            list0[nlist] = handB[i] + k;
+            list1[nlist++] = handW[i] + k;
+        }
+    }
 
-    //i=kn  kn=0=none, kn=1=SOU, kn=2=GOU,,,
-	for (PieceNumber_t kn = 3; kn <= MAX_PIECENUMBER; kn++){
-		const int z = knpos[kn]; //位置
-        assert(z != 0);
+    for (int y = RANK_1; y <= RANK_9; y++) {
+        for (int x = FILE_1; x <= FILE_9; x++) {
+            const int z = (x << 4) + y;
+            const int sq = NanohaTbl::z2sq[z];
+            switch (ban[z]) {
 
-        switch (z) {
-        case 1: //先手持駒
-        case 2: //後手持駒
-            piece = knkind[kn];
-            I2hand[piece]++;
-            hands = I2hand[piece];
-            list0[kn] = aihand0[piece] + hands;
-            list1[kn] = aihand1[piece] + hands;
-            //listkn[list0[kn]] = kn;
-            break;
-        default: //盤上
-			sq = NanohaTbl::z2sq[z];
-			switch (knkind[kn]) {
-			case SFU:
-				list0[kn] = f_pawn + sq;
-				list1[kn] = e_pawn + Inv(sq);
-				break;
-			case GFU:
-				list0[kn] = e_pawn + sq;
-				list1[kn] = f_pawn + Inv(sq);
-				break;
-			case SKY:
-				list0[kn] = f_lance + sq;
-				list1[kn] = e_lance + Inv(sq);
-				break;
-			case GKY:
-				list0[kn] = e_lance + sq;
-				list1[kn] = f_lance + Inv(sq);
-				break;
-			case SKE:
-				list0[kn] = f_knight + sq;
-				list1[kn] = e_knight + Inv(sq);
-				break;
-			case GKE:
-				list0[kn] = e_knight + sq;
-				list1[kn] = f_knight + Inv(sq);
-				break;
-			case SGI:
-				list0[kn] = f_silver + sq;
-				list1[kn] = e_silver + Inv(sq);
-				break;
-			case GGI:
-				list0[kn] = e_silver + sq;
-				list1[kn] = f_silver + Inv(sq);
-				break;
-			case SKI:
-			case STO:
-			case SNY:
-			case SNK:
-			case SNG:
-				list0[kn] = f_gold + sq;
-				list1[kn] = e_gold + Inv(sq);
-				break;
-			case GKI:
-			case GTO:
-			case GNY:
-			case GNK:
-			case GNG:
-				list0[kn] = e_gold + sq;
-				list1[kn] = f_gold + Inv(sq);
-				break;
-			case SKA:
-				list0[kn] = f_bishop + sq;
-				list1[kn] = e_bishop + Inv(sq);
-				break;
-			case GKA:
-				list0[kn] = e_bishop + sq;
-				list1[kn] = f_bishop + Inv(sq);
-				break;
-			case SUM:
-				list0[kn] = f_horse + sq;
-				list1[kn] = e_horse + Inv(sq);
-				break;
-			case GUM:
-				list0[kn] = e_horse + sq;
-				list1[kn] = f_horse + Inv(sq);
-				break;
-			case SHI:
-				list0[kn] = f_rook + sq;
-				list1[kn] = e_rook + Inv(sq);
-				break;
-			case GHI:
-				list0[kn] = e_rook + sq;
-				list1[kn] = f_rook + Inv(sq);
-				break;
-			case SRY:
-				list0[kn] = f_dragon + sq;
-				list1[kn] = e_dragon + Inv(sq);
-				break;
-			case GRY:
-				list0[kn] = e_dragon + sq;
-				list1[kn] = f_dragon + Inv(sq);
-				break;
-			case EMP:
-			case WALL:
-			case SOU:
-			case GOU:
-			case PIECE_NONE:
-				break;
-			}
-		}
-	}
+            case SFU:
+                list0[nlist] = f_pawn + sq;
+                list1[nlist++] = e_pawn + Inv(sq);
+                break;
+            case GFU:
+                list0[nlist] = e_pawn + sq;
+                list1[nlist++] = f_pawn + Inv(sq);
+                break;
+            case SKY:
+                list0[nlist] = f_lance + sq;
+                list1[nlist++] = e_lance + Inv(sq);
+                break;
+            case GKY:
+                list0[nlist] = e_lance + sq;
+                list1[nlist++] = f_lance + Inv(sq);
+                break;
+            case SKE:
+                list0[nlist] = f_knight + sq;
+                list1[nlist++] = e_knight + Inv(sq);
+                break;
+            case GKE:
+                list0[nlist] = e_knight + sq;
+                list1[nlist++] = f_knight + Inv(sq);
+                break;
+            case SGI:
+                list0[nlist] = f_silver + sq;
+                list1[nlist++] = e_silver + Inv(sq);
+                break;
+            case GGI:
+                list0[nlist] = e_silver + sq;
+                list1[nlist++] = f_silver + Inv(sq);
+                break;
+            case SKI:
+            case STO:
+            case SNY:
+            case SNK:
+            case SNG:
+                list0[nlist] = f_gold + sq;
+                list1[nlist++] = e_gold + Inv(sq);
+                break;
+            case GKI:
+            case GTO:
+            case GNY:
+            case GNK:
+            case GNG:
+                list0[nlist] = e_gold + sq;
+                list1[nlist++] = f_gold + Inv(sq);
+                break;
+            case SKA:
+                list0[nlist] = f_bishop + sq;
+                list1[nlist++] = e_bishop + Inv(sq);
+                break;
+            case GKA:
+                list0[nlist] = e_bishop + sq;
+                list1[nlist++] = f_bishop + Inv(sq);
+                break;
+            case SUM:
+                list0[nlist] = f_horse + sq;
+                list1[nlist++] = e_horse + Inv(sq);
+                break;
+            case GUM:
+                list0[nlist] = e_horse + sq;
+                list1[nlist++] = f_horse + Inv(sq);
+                break;
+            case SHI:
+                list0[nlist] = f_rook + sq;
+                list1[nlist++] = e_rook + Inv(sq);
+                break;
+            case GHI:
+                list0[nlist] = e_rook + sq;
+                list1[nlist++] = f_rook + Inv(sq);
+                break;
+            case SRY:
+                list0[nlist] = f_dragon + sq;
+                list1[nlist++] = e_dragon + Inv(sq);
+                break;
+            case GRY:
+                list0[nlist] = e_dragon + sq;
+                list1[nlist++] = f_dragon + Inv(sq);
+                break;
+            case EMP:
+            case WALL:
+            case SOU:
+            case GOU:
+            case PIECE_NONE:
+            default:
+                ;
+            }
+        }
+    }
+
+    return nlist;
 }
-#endif
 
-int Position::evaluate(const Color us) 
+// 評価関数が正しいかどうかを判定するのに使う
+int Position::evaluate_correct(const Color us) const
 {
-	const int sq_bk = SQ_BKING;
-	const int sq_wk = SQ_WKING;
+    int list0[MAX_PIECENUMBER + 1]; //駒番号numのlist0
+    int list1[MAX_PIECENUMBER + 1]; //駒番号numのlist1
+    int nlist = make_list_correct(list0, list1);
+
+    const int sq_bk = SQ_BKING;
+    const int sq_wk = SQ_WKING;
+
+    const kkp_entry* ppkppb = kpp3[sq_bk];
+    const kkp_entry* ppkppw = kpp3[Inv(sq_wk)];
+
+    int score = kk[sq_bk][sq_wk];
+    for (int kn = 0; kn < nlist; kn++){
+        const int k0 = list0[kn];
+        const int k1 = list1[kn];
+        const short* pkppb = ppkppb[k0];
+        const short* pkppw = ppkppw[k1];
+        for (int j = 0; j < kn; j++){
+            score += pkppb[list0[j]];
+            score -= pkppw[list1[j]];
+        }
+        score += kkp[sq_bk][sq_wk][k0];
+    }
+
+    score /= FV_SCALE;
+    score += MATERIAL;
+    score = (us == BLACK) ? score : -score;
+    return score;
+}
+
+int Position::make_list(int list0[NLIST], int list1[NLIST])
+{
+    /* 0:歩 1:香 2:桂 3:銀 4:金 5:角 6:飛車 */
+    int SHandCount[7] = {}, GHandCount[7] = {};
+    int nlist = 0;
+
+    for (int kn = KNE_FU; kn >= KNS_HI; --kn) {
+        int Kkind = knkind[kn];
+        int Kpos = knpos[kn];   // 駒の位置(1:先手持駒, 2:後手持駒)
+
+        /* (盤上は0x11から0x99のため右に2ビットシフトして0になるのは持ち駒 */
+        /* 盤上 */
+        if (Kpos >> 2){
+            const int sq = conv_z2sq(Kpos);
+            switch (Kkind) {
+            case SFU:
+                list0[nlist] = f_pawn + sq;
+                list1[nlist] = e_pawn + Inv(sq);
+                ++nlist;
+                break;
+            case GFU:
+                list0[nlist] = e_pawn + sq;
+                list1[nlist] = f_pawn + Inv(sq);
+                ++nlist;
+                break;
+            case STO:
+                list0[nlist] = f_gold + sq;
+                list1[nlist] = e_gold + Inv(sq);
+                ++nlist;
+                break;
+            case GTO:
+                list0[nlist] = e_gold + sq;
+                list1[nlist] = f_gold + Inv(sq);
+                ++nlist;
+                break;
+            case SKY:
+                list0[nlist] = f_lance + sq;
+                list1[nlist] = e_lance + Inv(sq);
+                ++nlist;
+                break;
+            case GKY:
+                list0[nlist] = e_lance + sq;
+                list1[nlist] = f_lance + Inv(sq);
+                ++nlist;
+                break;
+            case SNY:
+                list0[nlist] = f_gold + sq;
+                list1[nlist] = e_gold + Inv(sq);
+                ++nlist;
+                break;
+            case GNY:
+                list0[nlist] = e_gold + sq;
+                list1[nlist] = f_gold + Inv(sq);
+                ++nlist;
+                break;
+            case SKE:
+                list0[nlist] = f_knight + sq;
+                list1[nlist] = e_knight + Inv(sq);
+                ++nlist;
+                break;
+            case GKE:
+                list0[nlist] = e_knight + sq;
+                list1[nlist] = f_knight + Inv(sq);
+                ++nlist;
+                break;
+            case SNK:
+                list0[nlist] = f_gold + sq;
+                list1[nlist] = e_gold + Inv(sq);
+                ++nlist;
+                break;
+            case GNK:
+                list0[nlist] = e_gold + sq;
+                list1[nlist] = f_gold + Inv(sq);
+                ++nlist;
+                break;
+            case SGI:
+                list0[nlist] = f_silver + sq;
+                list1[nlist] = e_silver + Inv(sq);
+                ++nlist;
+                break;
+            case GGI:
+                list0[nlist] = e_silver + sq;
+                list1[nlist] = f_silver + Inv(sq);
+                ++nlist;
+                break;
+            case SNG:
+                list0[nlist] = f_gold + sq;
+                list1[nlist] = e_gold + Inv(sq);
+                ++nlist;
+                break;
+            case GNG:
+                list0[nlist] = e_gold + sq;
+                list1[nlist] = f_gold + Inv(sq);
+                ++nlist;
+                break;
+            case SKI:
+                list0[nlist] = f_gold + sq;
+                list1[nlist] = e_gold + Inv(sq);
+                ++nlist;
+                break;
+            case GKI:
+                list0[nlist] = e_gold + sq;
+                list1[nlist] = f_gold + Inv(sq);
+                ++nlist;
+                break;
+            case SKA:
+                list0[nlist] = f_bishop + sq;
+                list1[nlist] = e_bishop + Inv(sq);
+                ++nlist;
+                break;
+            case GKA:
+                list0[nlist] = e_bishop + sq;
+                list1[nlist] = f_bishop + Inv(sq);
+                ++nlist;
+                break;
+            case SUM:
+                list0[nlist] = f_horse + sq;
+                list1[nlist] = e_horse + Inv(sq);
+                ++nlist;
+                break;
+            case GUM:
+                list0[nlist] = e_horse + sq;
+                list1[nlist] = f_horse + Inv(sq);
+                ++nlist;
+                break;
+            case SHI:
+                list0[nlist] = f_rook + sq;
+                list1[nlist] = e_rook + Inv(sq);
+                ++nlist;
+                break;
+            case GHI:
+                list0[nlist] = e_rook + sq;
+                list1[nlist] = f_rook + Inv(sq);
+                ++nlist;
+                break;
+            case SRY:
+                list0[nlist] = f_dragon + sq;
+                list1[nlist] = e_dragon + Inv(sq);
+                ++nlist;
+                break;
+            case GRY:
+                list0[nlist] = e_dragon + sq;
+                list1[nlist] = f_dragon + Inv(sq);
+                ++nlist;
+                break;
+            default:
+                __assume(false);
+                break;
+            }
+        }
+        else if (Kpos == 1) { // 先手持駒
+            switch (Kkind) {
+            case SFU:
+                ++SHandCount[0];
+                list0[nlist] = f_hand_pawn + SHandCount[0];
+                list1[nlist] = e_hand_pawn + SHandCount[0];
+                ++nlist;
+                break;
+            case SKY:
+                ++SHandCount[1];
+                list0[nlist] = f_hand_lance + SHandCount[1];
+                list1[nlist] = e_hand_lance + SHandCount[1];
+                ++nlist;
+                break;
+            case SKE:
+                ++SHandCount[2];
+                list0[nlist] = f_hand_knight + SHandCount[2];
+                list1[nlist] = e_hand_knight + SHandCount[2];
+                ++nlist;
+                break;
+            case SGI:
+                ++SHandCount[3];
+                list0[nlist] = f_hand_silver + SHandCount[3];
+                list1[nlist] = e_hand_silver + SHandCount[3];
+                ++nlist;
+                break;
+            case SKI:
+                ++SHandCount[4];
+                list0[nlist] = f_hand_gold + SHandCount[4];
+                list1[nlist] = e_hand_gold + SHandCount[4];
+                ++nlist;
+                break;
+            case SKA:
+                ++SHandCount[5];
+                list0[nlist] = f_hand_bishop + SHandCount[5];
+                list1[nlist] = e_hand_bishop + SHandCount[5];
+                ++nlist;
+                break;
+            case SHI:
+                ++SHandCount[6];
+                list0[nlist] = f_hand_rook + SHandCount[6];
+                list1[nlist] = e_hand_rook + SHandCount[6];
+                ++nlist;
+                break;
+            default:
+                __assume(false); /* 心持ち高速化 */
+                break;
+            }
+        }
+        else /*(Kpos == 2)*/ {  // 後手持駒
+            switch (Kkind) {
+            case GFU:
+                ++GHandCount[0];
+                list0[nlist] = e_hand_pawn + GHandCount[0];
+                list1[nlist] = f_hand_pawn + GHandCount[0];
+                ++nlist;
+                break;
+            case GKY:
+                ++GHandCount[1];
+                list0[nlist] = e_hand_lance + GHandCount[1];
+                list1[nlist] = f_hand_lance + GHandCount[1];
+                ++nlist;
+                break;
+            case GKE:
+                ++GHandCount[2];
+                list0[nlist] = e_hand_knight + GHandCount[2];
+                list1[nlist] = f_hand_knight + GHandCount[2];
+                ++nlist;
+                break;
+            case GGI:
+                ++GHandCount[3];
+                list0[nlist] = e_hand_silver + GHandCount[3];
+                list1[nlist] = f_hand_silver + GHandCount[3];
+                ++nlist;
+                break;
+            case GKI:
+                ++GHandCount[4];
+                list0[nlist] = e_hand_gold + GHandCount[4];
+                list1[nlist] = f_hand_gold + GHandCount[4];
+                ++nlist;
+                break;
+            case GKA:
+                ++GHandCount[5];
+                list0[nlist] = e_hand_bishop + GHandCount[5];
+                list1[nlist] = f_hand_bishop + GHandCount[5];
+                ++nlist;
+                break;
+            case GHI:
+                ++GHandCount[6];
+                list0[nlist] = e_hand_rook + GHandCount[6];
+                list1[nlist] = f_hand_rook + GHandCount[6];
+                ++nlist;
+                break;
+            default:
+                __assume(false); /* 心持ち高速化 */
+                break;
+            }
+        }
+    }
+
+    assert(nlist == NLIST);
+    return nlist;
+}
+
+int Position::evaluate_body(const Color us)
+{
+    int list0[NLIST]; // 駒番号numのlist0
+    int list1[NLIST]; // 駒番号numのlist1
+    int nlist = make_list(list0, list1);
+
+    const int sq_bk = SQ_BKING;
+    const int sq_wk = SQ_WKING;
 
     const kkp_entry* ppkppb = kpp3[sq_bk];
     const kkp_entry* ppkppw = kpp3[Inv(sq_wk)];
 
 	int score = kk[sq_bk][sq_wk];
-	for (int kn = 3; kn <= MAX_PIECENUMBER; kn++){
+    for (int kn = 0; kn < NLIST; kn++){
 		const int k0 = list0[kn];
 		const int k1 = list1[kn];
 		const short* pkppb = ppkppb[k0];
 		const short* pkppw = ppkppw[k1];
-		for (int j = 3; j < kn; j++){
+		for (int j = 0; j < kn; j++){
             score += pkppb[list0[j]];
             score -= pkppw[list1[j]];
 		}
@@ -358,6 +659,13 @@ int Position::evaluate(const Color us)
     score += MATERIAL;
     score = (us == BLACK) ? score : -score;
     return score;
+}
+
+int Position::evaluate(const Color us)
+{
+    // なぜかevaluate_bodyを通した方が速い
+    return evaluate_body(us);
+    //return evaluate_correct(us);
 }
 
 Value evaluate(Position& pos, Value& margin)

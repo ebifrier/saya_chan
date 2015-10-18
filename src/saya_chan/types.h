@@ -284,6 +284,7 @@ enum Color {
 typedef uint8_t PieceKind_t;       // 駒種類
 typedef uint8_t PieceNumber_t;     // 駒番号
 #define MAX_PIECENUMBER    40
+#define NLIST	           38
 
 // 利きの定義
 typedef uint32_t effect_t;
@@ -600,48 +601,6 @@ enum KPP{
     e_dragon = f_dragon + 81,
     fe_end = e_dragon + 81
 };
-
-//pieceをkppのindexに変換
-const KPP aikpp0[32] = {
-    none, f_pawn, f_lance, f_knight, f_silver, f_gold, f_bishop, f_rook,
-    none, f_gold, f_gold, f_gold, f_gold, none, f_horse, f_dragon,
-    none, e_pawn, e_lance, e_knight, e_silver, e_gold, e_bishop, e_rook,
-    none, e_gold, e_gold, e_gold, e_gold, none, e_horse, e_dragon
-};
-//pieceをkppのindexに変換
-const KPP aikpp1[32] = {
-    none, e_pawn, e_lance, e_knight, e_silver, e_gold, e_bishop, e_rook,
-    none, e_gold, e_gold, e_gold, e_gold, none, e_horse, e_dragon,
-    none, f_pawn, f_lance, f_knight, f_silver, f_gold, f_bishop, f_rook,
-    none, f_gold, f_gold, f_gold, f_gold, none, f_horse, f_dragon
-};
-//pieceをkpp_handのindexに変換
-const KPP aihand0[32] = {
-    none, f_hand_pawn, f_hand_lance, f_hand_knight,
-    f_hand_silver, f_hand_gold, f_hand_bishop, f_hand_rook,
-    none, none, none, none, none, none, none, none,
-    none, e_hand_pawn, e_hand_lance, e_hand_knight,
-    e_hand_silver, e_hand_gold, e_hand_bishop, e_hand_rook,
-    none, none, none, none, none, none, none, none
-};
-//pieceをkpp_handのindexに変換
-const KPP aihand1[32] = {
-    none, e_hand_pawn, e_hand_lance, e_hand_knight,
-    e_hand_silver, e_hand_gold, e_hand_bishop, e_hand_rook,
-    none, none, none, none, none, none, none, none,
-    none, f_hand_pawn, f_hand_lance, f_hand_knight,
-    f_hand_silver, f_hand_gold, f_hand_bishop, f_hand_rook,
-    none, none, none, none, none, none, none, none
-};
-//駒番号numをpiecetypeに変換
-const PieceType knpt[41] = {
-    OU, OU, HI, HI, KA, KA,
-    KI, KI, KI, KI, GI, GI, GI, GI,
-    KE, KE, KE, KE, KY, KY, KY, KY,
-    FU, FU, FU, FU, FU, FU, FU, FU, FU,
-    FU, FU, FU, FU, FU, FU, FU, FU, FU
-};
-
 
 /// Score enum keeps a midgame and an endgame value in a single
 /// integer (enum), first LSB 16 bits are used to store endgame
