@@ -894,9 +894,7 @@ inline int conv_sq2z(int sq)
     return (x+1)*0x10+(y+1);
 }
 
-#if defined(_MSC_VER)
-
-#elif defined(__GNUC__)
+#if defined(__GNUC__)
 inline unsigned char _BitScanForward(unsigned long * Index, unsigned long Mask)
 {
     if (Mask == 0) return 0;
@@ -904,9 +902,9 @@ inline unsigned char _BitScanForward(unsigned long * Index, unsigned long Mask)
     return 1;
 }
 
-#define __assume(x)        // MS のコンパイラのコード生成のヒントだが、gccでは無効なため
-
-#endif    // defined(__GNUC__)
+// MS のコンパイラのコード生成のヒントだが、gccでは無効なため
+#define __assume(x) __builtin_unreachable()
+#endif // defined(__GNUC__)
 
 inline unsigned int PopCnt32(unsigned int value)
 {
