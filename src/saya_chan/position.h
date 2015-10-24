@@ -65,6 +65,17 @@ struct StateInfo {
     uint32_t hand;
     uint32_t effect;
     Key key;
+    PieceNumber kncap;  // 捕った持駒の駒番号
+
+#if defined(MAKELIST_DIFF)
+    Piece cap_hand;     // 捕獲した持駒のPiece
+    Piece drop_hand;    // 打った持駒のPiece
+    PieceNumber kndrop; // 打った持駒の駒番号
+    int caplist[2];     // 捕獲される駒のlist
+    int droplist[2];    // 打つ持駒のlist
+    int fromlist[2];    // 動かす駒のlist
+#endif
+
 #else
     Key pawnKey, materialKey;
     Value npMaterial[2];
@@ -483,7 +494,7 @@ private:
 #if defined(NANOHA)
     Piece banpadding[16*2];        // Padding
     Piece ban[16*12];            // 盤情報 (駒種類)
-    PieceNumber_t komano[16*12];        // 盤情報 (駒番号)
+    PieceNumber komano[16 * 12];        // 盤情報 (駒番号)
 #define MAX_KOMANO    40
     effect_t effect[2][16*12];                // 利き
 #define effectB    effect[BLACK]
@@ -495,36 +506,9 @@ private:
     Hand hand[2];                    // 持駒
 #define handS    hand[BLACK]
 #define handG    hand[WHITE]
-    PieceKind_t knkind[MAX_PIECENUMBER+1];    // knkind[num] : 駒番号numの駒種類(EMP(0x00) ～ GRY(0x1F))
-    uint8_t knpos[MAX_PIECENUMBER+1];        // knpos[num]  : 駒番号numの盤上の座標(0:未使用、1:先手持駒、2:後手持駒、0x11-0x99:盤上)
-                                    //    駒番号
-#define KNS_SOU    1
-#define KNE_SOU    1
-                                //        1    : 先手玉
-#define KNS_GOU    2
-#define KNE_GOU    2
-                                //        2    : 後手玉
-#define KNS_HI    3
-#define KNE_HI    4
-                                //        3- 4 : 飛
-#define KNS_KA    5
-#define KNE_KA    6
-                                //        5- 6 : 角
-#define KNS_KI    7
-#define KNE_KI    10
-                                //        7-10 : 金
-#define KNS_GI    11
-#define KNE_GI    14
-                                //       11-14 : 銀
-#define KNS_KE    15
-#define KNE_KE    18
-                                //       15-18 : 桂
-#define KNS_KY    19
-#define KNE_KY    22
-                                //       19-22 : 香
-#define KNS_FU    23
-#define KNE_FU    40
-                                //       23-40 : 歩
+    Piece knkind[PIECENUMBER_MAX + 1]; // knkind[num] : 駒番号numの駒種類(EMP(0x00) ～ GRY(0x1F))
+    uint8_t knpos[PIECENUMBER_MAX + 1];        // knpos[num]  : 駒番号numの盤上の座標(0:未使用、1:先手持駒、2:後手持駒、0x11-0x99:盤上)
+
 #define kingS    sq_king<BLACK>()
 #define kingG    sq_king<WHITE>()
 #define hiPos    (&knpos[ 3])
@@ -534,6 +518,23 @@ private:
 #define OnBoard(x)    ((x) >= 0x11)
     int material;
     bool bInaniwa;
+#endif
+
+#if defined(MAKELIST_DIFF)
+    int evaluate_make_list_diff(const Color us);
+    void init_make_list();
+    void make_list_move(PieceNumber kn, Piece piece, Square to);
+    void make_list_undo_move(PieceNumber kn);
+    void make_list_capture(PieceNumber kn, Piece captureType);
+    void make_list_undo_capture(PieceNumber kn);
+    PieceNumber make_list_drop(Piece piece, Square to);
+    void make_list_undo_drop(PieceNumber kn, Piece piece);
+
+    int list0[PIECENUMBER_MAX + 1]; //駒番号numの評価関数用list0
+    int list1[PIECENUMBER_MAX + 1]; //駒番号numの評価関数用list1
+
+    PieceNumber listkn[90]; //list0の駒番号num
+    int handcount[32]; //Pieceの持駒枚数
 #endif
 
     // Other info

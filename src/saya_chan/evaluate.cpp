@@ -71,6 +71,38 @@ namespace NanohaTbl {
         -1,  9, 10, 11, 12, 13, 14, 15, 16, 17, -1, -1, -1, -1, -1, -1,
         -1,  0,  1,  2,  3,  4,  5,  6,  7,  8, -1, -1, -1, -1, -1, -1,
     };
+
+    const KPP KppIndex0[32] = {
+        none, f_pawn, f_lance, f_knight, f_silver, f_gold, f_bishop, f_rook,
+        none, f_gold, f_gold, f_gold, f_gold, none, f_horse, f_dragon,
+        none, e_pawn, e_lance, e_knight, e_silver, e_gold, e_bishop, e_rook,
+        none, e_gold, e_gold, e_gold, e_gold, none, e_horse, e_dragon
+    };
+
+    const KPP KppIndex1[32] = {
+        none, e_pawn, e_lance, e_knight, e_silver, e_gold, e_bishop, e_rook,
+        none, e_gold, e_gold, e_gold, e_gold, none, e_horse, e_dragon,
+        none, f_pawn, f_lance, f_knight, f_silver, f_gold, f_bishop, f_rook,
+        none, f_gold, f_gold, f_gold, f_gold, none, f_horse, f_dragon
+    };
+
+    const KPP HandIndex0[32] = {
+        none, f_hand_pawn, f_hand_lance, f_hand_knight,
+        f_hand_silver, f_hand_gold, f_hand_bishop, f_hand_rook,
+        none, none, none, none, none, none, none, none,
+        none, e_hand_pawn, e_hand_lance, e_hand_knight,
+        e_hand_silver, e_hand_gold, e_hand_bishop, e_hand_rook,
+        none, none, none, none, none, none, none, none
+    };
+
+    const KPP HandIndex1[32] = {
+        none, e_hand_pawn, e_hand_lance, e_hand_knight,
+        e_hand_silver, e_hand_gold, e_hand_bishop, e_hand_rook,
+        none, none, none, none, none, none, none, none,
+        none, f_hand_pawn, f_hand_lance, f_hand_knight,
+        f_hand_silver, f_hand_gold, f_hand_bishop, f_hand_rook,
+        none, none, none, none, none, none, none, none
+    };
 }
 
 namespace {
@@ -216,8 +248,8 @@ int Position::compute_material() const
 	return v;
 }
 
-int Position::make_list_correct(int list0[MAX_PIECENUMBER + 1],
-                                int list1[MAX_PIECENUMBER + 1]) const
+int Position::make_list_correct(int list0[PIECENUMBER_MAX + 1],
+                                int list1[PIECENUMBER_MAX + 1]) const
 {
     int nlist = 0;
     int Hand[14];
@@ -347,8 +379,8 @@ int Position::make_list_correct(int list0[MAX_PIECENUMBER + 1],
 // 評価関数が正しいかどうかを判定するのに使う
 int Position::evaluate_correct(const Color us) const
 {
-    int list0[MAX_PIECENUMBER + 1]; //駒番号numのlist0
-    int list1[MAX_PIECENUMBER + 1]; //駒番号numのlist1
+    int list0[PIECENUMBER_MAX + 1]; //駒番号numのlist0
+    int list1[PIECENUMBER_MAX + 1]; //駒番号numのlist1
     int nlist = make_list_correct(list0, list1);
 
     const int sq_bk = SQ_BKING;
@@ -642,18 +674,18 @@ int Position::evaluate_body(const Color us)
     const kkp_entry* ppkppb = kpp3[sq_bk];
     const kkp_entry* ppkppw = kpp3[Inv(sq_wk)];
 
-	int score = kk[sq_bk][sq_wk];
+    int score = kk[sq_bk][sq_wk];
     for (int kn = 0; kn < NLIST; kn++){
-		const int k0 = list0[kn];
-		const int k1 = list1[kn];
-		const short* pkppb = ppkppb[k0];
-		const short* pkppw = ppkppw[k1];
-		for (int j = 0; j < kn; j++){
+        const int k0 = list0[kn];
+        const int k1 = list1[kn];
+        const short* pkppb = ppkppb[k0];
+        const short* pkppw = ppkppw[k1];
+        for (int j = 0; j < kn; j++){
             score += pkppb[list0[j]];
             score -= pkppw[list1[j]];
-		}
-		score += kkp[sq_bk][sq_wk][k0];
-	}
+        }
+        score += kkp[sq_bk][sq_wk][k0];
+    }
 
     score /= FV_SCALE;
     score += MATERIAL;
@@ -661,11 +693,169 @@ int Position::evaluate_body(const Color us)
     return score;
 }
 
+
+#if defined(MAKELIST_DIFF)
+void Position::init_make_list()
+{
+    memset(list0, 0, sizeof(list0));
+    memset(list1, 0, sizeof(list1));
+    memset(listkn, 0, sizeof(listkn));
+    memset(handcount, 0, sizeof(handcount));
+        
+    for (PieceNumber kn = PIECENUMBER_MIN; kn <= PIECENUMBER_MAX; ++kn){
+        const int kpos = knpos[kn];
+        const Piece piece = Piece(knkind[kn]);
+        int count, sq;
+
+        switch (kpos) {
+        case 0:
+            break;
+        case 1: // 先手持駒
+        case 2: // 後手持駒
+            count = ++handcount[piece];
+            list0[kn] = NanohaTbl::HandIndex0[piece] + count;
+            list1[kn] = NanohaTbl::HandIndex1[piece] + count;
+            listkn[list0[kn]] = kn;
+            break;
+        default:
+            if ((SFU <= piece && piece <= SRY && piece != SOU) ||
+                (GFU <= piece && piece <= GRY && piece != GOU)) {
+                sq = conv_z2sq(kpos);
+                list0[kn] = NanohaTbl::KppIndex0[piece] + sq;
+                list1[kn] = NanohaTbl::KppIndex1[piece] + Inv(sq);
+            }
+            break;
+        }
+    }
+}
+
+void Position::make_list_move(PieceNumber kn, Piece piece, Square to)
+{
+    if (kn < PIECENUMBER_MIN) return;
+
+    st->fromlist[0] = list0[kn];
+    st->fromlist[1] = list1[kn];
+
+    const int sq = conv_z2sq(to);
+    list0[kn] = NanohaTbl::KppIndex0[piece] + sq;
+    list1[kn] = NanohaTbl::KppIndex1[piece] + Inv(sq);
+}
+
+void Position::make_list_undo_move(PieceNumber kn)
+{
+    if (kn < PIECENUMBER_MIN) return;
+
+    list0[kn] = st->fromlist[0];
+    list1[kn] = st->fromlist[1];
+}
+
+void Position::make_list_capture(PieceNumber kn, Piece captureType)
+{
+    assert(MIN_PIECENUMBER <= kn && kn <= MAX_PIECENUMBER);
+
+    // 捕られる駒の情報
+    st->caplist[0] = list0[kn];
+    st->caplist[1] = list1[kn];
+
+    // 捕った持駒の情報
+    st->cap_hand = captureType;
+
+    // 1枚増やす
+    const int count = ++handcount[captureType];
+    list0[kn] = NanohaTbl::HandIndex0[captureType] + count;
+    list1[kn] = NanohaTbl::HandIndex1[captureType] + count;
+    listkn[list0[kn]] = kn;
+
+    assert(count <= 18);
+    assert(list0[kn] < fe_hand_end);
+}
+
+void Position::make_list_undo_capture(PieceNumber kn)
+{
+    // 持駒を戻す
+    handcount[st->cap_hand]--;
+    listkn[list0[kn]] = PIECENUMBER_NONE;
+
+    // listを戻す
+    list0[kn] = st->caplist[0];
+    list1[kn] = st->caplist[1];
+}
+
+PieceNumber Position::make_list_drop(Piece piece, Square to)
+{
+    // 持ち駒の中で一番駒番号の多い駒を打ちます。
+    const int count = handcount[piece];
+    const int handIndex0 = NanohaTbl::HandIndex0[piece] + count;
+    const PieceNumber kn = listkn[handIndex0];  // maxの駒番号
+    assert(handIndex0 < fe_hand_end);
+
+    // knをセーブ
+    st->droplist[0] = list0[kn];
+    st->droplist[1] = list1[kn];
+
+    listkn[handIndex0] = PIECENUMBER_NONE; // 駒番号の一番大きい持ち駒を消去
+    handcount[piece]--;                    // 打つので１枚減らす
+
+    // 打った駒の情報
+    const int sq = conv_z2sq(to);
+    list0[kn] = NanohaTbl::KppIndex0[piece] + sq;
+    list1[kn] = NanohaTbl::KppIndex1[piece] + Inv(sq);
+
+    return kn;
+}
+
+void Position::make_list_undo_drop(PieceNumber kn, Piece piece)
+{
+    list0[kn] = st->droplist[0];
+    list1[kn] = st->droplist[1];
+    //st->drop_hand = piece;
+
+    listkn[list0[kn]] = kn;
+    handcount[piece]++;
+}
+
+int Position::evaluate_make_list_diff(const Color us)
+{
+    const int sq_bk = SQ_BKING;
+    const int sq_wk = SQ_WKING;
+
+    const kkp_entry* ppkppb = kpp3[sq_bk];
+    const kkp_entry* ppkppw = kpp3[Inv(sq_wk)];
+
+    int score = kk[sq_bk][sq_wk];
+    for (int kn = PIECENUMBER_MIN; kn <= PIECENUMBER_MAX; kn++){
+        const int k0 = list0[kn];
+        const int k1 = list1[kn];
+        const short* pkppb = ppkppb[k0];
+        const short* pkppw = ppkppw[k1];
+        for (int j = PIECENUMBER_MIN; j < kn; j++){
+            const int l0 = list0[j];
+            const int l1 = list1[j];
+            score += pkppb[l0];
+            score -= pkppw[l1];
+        }
+        score += kkp[sq_bk][sq_wk][k0];
+    }
+
+    score /= FV_SCALE;
+    score += MATERIAL;
+    score = (us == BLACK) ? score : -score;
+    return score;
+}
+#endif
+
+
 int Position::evaluate(const Color us)
 {
+#if defined(MAKELIST_DIFF)
+    int score = evaluate_make_list_diff(us);
+#else
     // なぜかevaluate_bodyを通した方が速い
-    return evaluate_body(us);
-    //return evaluate_correct(us);
+    int score = evaluate_body(us);
+    //int score = evaluate_correct(us);
+#endif
+
+    return score;
 }
 
 Value evaluate(Position& pos, Value& margin)
