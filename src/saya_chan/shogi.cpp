@@ -287,7 +287,7 @@ void Position::init_position(const unsigned char board_ori[9][9], const int Moch
 
     // boardで与えられた局面を設定します。
     int z;
-    int kn;
+    PieceNumber kn;
     for(int dan = 1; dan <= 9; dan++) {
         for(int suji = 0x10; suji <= 0x90; suji += 0x10) {
             // 将棋の筋は左から右なので、配列の宣言と逆になるため、筋はひっくり返さないとなりません。
@@ -368,10 +368,10 @@ void Position::init_position(const unsigned char board_ori[9][9], const int Moch
 #define KNABORT(kind)    fprintf(stderr, "Error!:%s:%d:kind=%d\n", __FILE__, __LINE__, kind);exit(-1)
 #define KNHANDSET(SorG, kind) \
         for (kn = KNS_##kind; kn <= KNE_##kind; kn++) {        \
-            if (knkind[kn] == 0) break;        \
+            if (knkind[kn] == EMP) break;        \
         }        \
-        if (kn > KNE_##kind) {KNABORT(kind);}        \
-        knkind[kn] = SorG | kind;            \
+        if (kn > KNE_##kind) {KNABORT(kind);}          \
+        knkind[kn] = static_cast<Piece>(SorG | kind);  \
         knpos[kn] = (SorG == SENTE) ? 1 : 2;
 
     int n;
@@ -398,6 +398,11 @@ void Position::init_position(const unsigned char board_ori[9][9], const int Moch
 
     // ピン情報の初期化
     make_pin_info();
+
+#if defined(MAKELIST_DIFF)
+    // listの初期化
+    init_make_list();
+#endif
 }
 
 // ピンの状態を設定する
@@ -800,6 +805,16 @@ void Position::do_move(Move m, StateInfo& newSt)
         uint32_t hand;
         uint32_t effect;
         Key key;
+        PieceNumber kncap;  // 捕った持駒の駒番号
+
+#if defined(MAKELIST_DIFF)
+        Piece cap_hand;     // 捕獲した持駒のPiece
+        Piece drop_hand;    // 打った持駒のPiece
+        PieceNumber kndrop; // 打った持駒の駒番号
+        int caplist[2];     // 捕獲される駒のlist
+        int droplist[2];    // 打つ持駒のlist
+        int fromlist[2];    // 動かす駒のlist
+#endif
     };
 
     memcpy(&newSt, st, sizeof(ReducedStateInfo));
@@ -832,7 +847,7 @@ void Position::do_move(Move m, StateInfo& newSt)
 
     Piece piece = piece_on(from);
     Piece capture = piece_on(to);
-    int kn;
+    PieceNumber kn;
     unsigned long id;
     unsigned long tkiki;
 
@@ -924,15 +939,21 @@ void Position::do_move(Move m, StateInfo& newSt)
     if (capture) {
         del_effect(to, capture);    // 取る駒の利きを消す
         kn = komano[to];
-        knkind[kn] = (capture ^ GOTE) & ~(PROMOTED);
+        knkind[kn] = static_cast<Piece>((capture ^ GOTE) & ~PROMOTED);
         knpos[kn] = (us == BLACK) ? 1 : 2;
         if (us == BLACK) handS.inc(capture & ~(GOTE | PROMOTED));
         else             handG.inc(capture & ~(GOTE | PROMOTED));
 
+        st->kncap = PieceNumber(kn); // 捕獲された駒の番号をセーブ
+
+#if defined(MAKELIST_DIFF)
+        make_list_capture(kn, Piece(knkind[kn]));
+#endif
+
 #if !defined(TSUMESOLVER)
         // material 更新
         material -= NanohaTbl::KomaValueEx[capture];
-#endif//#if !defined(TSUMESOLVER)
+#endif
 
         // ハッシュ更新
         key ^= zobrist[capture][to];
@@ -961,7 +982,7 @@ void Position::do_move(Move m, StateInfo& newSt)
 #if !defined(TSUMESOLVER)
         // material 更新
         material += NanohaTbl::KomaValuePro[piece];
-#endif//#if !defined(TSUMESOLVER)
+#endif
 
         piece = Piece(int(piece)|PROMOTED);
     }
@@ -975,14 +996,15 @@ void Position::do_move(Move m, StateInfo& newSt)
     prefetch(reinterpret_cast<char*>(TT.first_entry(key)));
 
     // Move the piece
-
     ban[to]   = piece;
     ban[from] = EMP;
     komano[to] = kn;
-    komano[from] = 0;
+    komano[from] = PIECENUMBER_NONE;
+    add_effect(to); // 利きを更新
 
-    // 利きを更新
-    add_effect(to);
+#if defined(MAKELIST_DIFF)
+    make_list_move(kn, piece, to);
+#endif
 
     // 移動元の長い利きを伸ばす
     // 後手の利きを書く
@@ -1096,8 +1118,7 @@ void Position::do_drop(Move m)
     assert(square_is_empty(to));
 
     Piece piece = move_piece(m);
-    int kn = 0x80;
-    int kne = 0;
+    //int kne = 0;
     unsigned long id;
     unsigned long tkiki;
 
@@ -1134,38 +1155,38 @@ void Position::do_drop(Move m)
     case EMP:
         break;
     case FU:
-        kn  = KNS_FU;
-        kne = KNE_FU;
+        //kn  = KNS_FU;
+        //kne = KNE_FU;
         diff = HAND_FU_INC;
         break;
     case KY:
-        kn  = KNS_KY;
-        kne = KNE_KY;
+        //kn  = KNS_KY;
+        //kne = KNE_KY;
         diff = HAND_KY_INC;
         break;
     case KE:
-        kn  = KNS_KE;
-        kne = KNE_KE;
+        //kn  = KNS_KE;
+        //kne = KNE_KE;
         diff = HAND_KE_INC;
         break;
     case GI:
-        kn  = KNS_GI;
-        kne = KNE_GI;
+        //kn  = KNS_GI;
+        //kne = KNE_GI;
         diff = HAND_GI_INC;
         break;
     case KI:
-        kn  = KNS_KI;
-        kne = KNE_KI;
+        //kn  = KNS_KI;
+        //kne = KNE_KI;
         diff = HAND_KI_INC;
         break;
     case KA:
-        kn  = KNS_KA;
-        kne = KNE_KA;
+        //kn  = KNS_KA;
+        //kne = KNE_KA;
         diff = HAND_KA_INC;
         break;
     case HI:
-        kn  = KNS_HI;
-        kne = KNE_HI;
+        //kn  = KNS_HI;
+        //kne = KNE_HI;
         diff = HAND_HI_INC;
         break;
     default:
@@ -1174,16 +1195,16 @@ void Position::do_drop(Move m)
 
     if (us == BLACK) {
         handS.h -= diff;
-        while (kn <= kne) {
+        /*while (kn <= kne) {
             if (knpos[kn] == 1) break;
             kn++;
-        }
+        }*/
     } else {
         handG.h -= diff;
-        while (kn <= kne) {
+        /*while (kn <= kne) {
             if (knpos[kn] == 2) break;
             kn++;
-        }
+        }*/
     }
 
 #if !defined(NDEBUG)
@@ -1196,6 +1217,9 @@ void Position::do_drop(Move m)
 
     assert(color_of(piece) == us);
 
+#if defined(MAKELIST_DIFF)
+    PieceNumber kn = make_list_drop(piece, to);
+#endif
     knkind[kn] = piece;
     knpos[kn] = to;
     ban[to] = piece;
@@ -1260,7 +1284,7 @@ void Position::undo_move(Move m) {
     bool pm = is_promotion(m);
     Piece piece = move_piece(m);
     Piece captured = st->captured;
-    int kn;
+    PieceNumber kn;
     unsigned long id;
     unsigned long tkiki;
 
@@ -1346,12 +1370,10 @@ void Position::undo_move(Move m) {
 
     kn = komano[to];
     if (pm) {
-///        piece &= ~PROMOTED;
-
 #if !defined(TSUMESOLVER)
         // material 更新
         material -= NanohaTbl::KomaValuePro[piece];
-#endif//#if !defined(TSUMESOLVER)
+#endif
     }
     knkind[kn] = piece;
     knpos[kn] = from;
@@ -1360,70 +1382,27 @@ void Position::undo_move(Move m) {
     komano[from] = komano[to];
     ban[from] = piece;
 
+#if defined(MAKELIST_DIFF)
+    make_list_undo_move(kn);
+#endif
+
     if (captured) {
 #if !defined(TSUMESOLVER)
         // material 更新
         material += NanohaTbl::KomaValueEx[captured];
-#endif//#if !defined(TSUMESOLVER)
-
-        int kne = 0;
-        switch (captured & ~(GOTE|PROMOTED)) {
-        case EMP:
-            break;
-        case FU:
-            kn  = KNS_FU;
-            kne = KNE_FU;
-            break;
-        case KY:
-            kn  = KNS_KY;
-            kne = KNE_KY;
-            break;
-        case KE:
-            kn  = KNS_KE;
-            kne = KNE_KE;
-            break;
-        case GI:
-            kn  = KNS_GI;
-            kne = KNE_GI;
-            break;
-        case KI:
-            kn  = KNS_KI;
-            kne = KNE_KI;
-            break;
-        case KA:
-            kn  = KNS_KA;
-            kne = KNE_KA;
-            break;
-        case HI:
-            kn  = KNS_HI;
-            kne = KNE_HI;
-            break;
-        default:
-            break;
-        }
-    
-        while (kn <= kne) {
-            if (us == BLACK) {
-                if (knpos[kn] == 1) break;
-            } else {
-                if (knpos[kn] == 2) break;
-            }
-            kn++;
-        }
-#if 0
-        // エラーのときに Die!
-        if (kn > kne) {
-            Print();
-            move_print(m);
-            output_info(":kn=%d, kne=%d, capture=0x%X\n", kn, kne, captured);
-            MYABORT();
-        }
 #endif
+
+        // 捕獲された駒の番号をロード
+        kn = st->kncap;
         knkind[kn] = captured;
         knpos[kn] = to;
         ban[to] = captured;
         komano[to] = kn;
         add_effect(to);    // 取った駒の利きを追加
+
+#if defined(MAKELIST_DIFF)
+        make_list_undo_capture(kn);
+#endif
 
         if (us == BLACK) handS.dec(captured & ~(GOTE | PROMOTED));
         else             handG.dec(captured & ~(GOTE | PROMOTED));
@@ -1446,7 +1425,7 @@ void Position::undo_move(Move m) {
             }
         }
         ban[to] = EMP;
-        komano[to] = 0;
+        komano[to] = PIECENUMBER_NONE;
     }
 
     // 移動元の長い利きをさえぎる
@@ -1543,8 +1522,6 @@ void Position::undo_drop(Move m)
     Color us = side_to_move();
     Square to = move_to(m);
     Piece piece = move_piece(m);
-    int kn = 0x80;
-    int kne = 0;
     unsigned long id;
     unsigned long tkiki;
 
@@ -1561,68 +1538,45 @@ void Position::undo_drop(Move m)
     }
 
     unsigned int diff = 0;
-    switch (piece & ~GOTE) {
-    case EMP:
+    switch (type_of(piece)) {
+    case PIECE_TYPE_NONE:
         break;
     case FU:
-        kn  = KNS_FU;
-        kne = KNE_FU;
         diff = HAND_FU_INC;
         break;
     case KY:
-        kn  = KNS_KY;
-        kne = KNE_KY;
         diff = HAND_KY_INC;
         break;
     case KE:
-        kn  = KNS_KE;
-        kne = KNE_KE;
         diff = HAND_KE_INC;
         break;
     case GI:
-        kn  = KNS_GI;
-        kne = KNE_GI;
         diff = HAND_GI_INC;
         break;
     case KI:
-        kn  = KNS_KI;
-        kne = KNE_KI;
         diff = HAND_KI_INC;
         break;
     case KA:
-        kn  = KNS_KA;
-        kne = KNE_KA;
         diff = HAND_KA_INC;
         break;
     case HI:
-        kn  = KNS_HI;
-        kne = KNE_HI;
         diff = HAND_HI_INC;
         break;
     default:
+        __assume(false);
         break;
     }
 
-    while (kn <= kne) {
-        if (knpos[kn] == to) break;
-        kn++;
-    }
-#if 0
-    // エラーのときに Die!
-    if (kn > kne) {
-        Print();
-        move_print(m);
-        output_info("\n");
-        MYABORT();
-    }
-#endif
-
+    PieceNumber kn = komano[to];
     knkind[kn] = piece;
     knpos[kn] = (us == BLACK) ? 1 : 2;
     ban[to] = EMP;
-    komano[to] = 0;
+    komano[to] = PIECENUMBER_NONE;
+    del_effect(to, piece);  // 動かした駒の利きを消す
 
-    del_effect(to, piece);                    // 動かした駒の利きを消す
+#if defined(MAKELIST_DIFF)
+    make_list_undo_drop(kn, piece);
+#endif
 
     // 打った位置の長い利きを通す
     // 後手の利きを追加

@@ -57,16 +57,17 @@ using namespace std;
 /// Version number. If EngineVersion is left empty, then AppTag plus
 /// current date (in the format YYMMDD) is used as a version number.
 
-#if defined(NANOHA)
+#if defined(SAYA)
+static const string AppName = "Saya_chan";
+#if defined(MAKELIST_DIFF)
+static const string EngineVersion = "0.1.1 makelist_diff";
+#else
+static const string EngineVersion = "0.1.1";
+#endif
+#elif defined(NANOHA)
 #if defined(EVAL_MICRO)
 static const string AppName = "NanohaMicro";
 static const string EngineVersion = "0.2.1.1";
-#elif defined(EVAL_OLD)
-static const string AppName = "Saya_chan";
-static const string EngineVersion = "0.0.8"/*"0.2.1.1"*/;
-#elif defined(SAYA)
-static const string AppName = "Saya_chan";
-static const string EngineVersion = "0.1.0.7-4i";
 #else
 static const string AppName = "NanohaMini";
 static const string EngineVersion = "0.2.1.1b";

@@ -26,6 +26,6 @@
 
 class Position;
 
-Value evaluate(const Position& pos, Value& margin);
+Value evaluate(Position& pos, Value& margin);
 
 #endif // !defined(EVALUATE_H_INCLUDED)

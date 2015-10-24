@@ -277,13 +277,37 @@ enum Piece {
     PIECE_NONE = 32
 };
 
+// 評価関数の38要素化のために使用する駒番号
+enum PieceNumber {
+    PIECENUMBER_NONE = 0,
+    KNS_SOU = 1, // 先手玉
+    KNE_SOU = 1,
+    KNS_GOU = 2, // 後手玉
+    KNE_GOU = 2,
+    KNS_HI = 3, // 飛
+    KNE_HI = 4,
+    KNS_KA = 5, // 角
+    KNE_KA = 6,
+    KNS_KI = 7, // 金
+    KNE_KI = 10,
+    KNS_GI = 11, // 銀
+    KNE_GI = 14,
+    KNS_KE = 15, // 桂
+    KNE_KE = 18,
+    KNS_KY = 19, // 香車
+    KNE_KY = 22,
+    KNS_FU = 23, // 歩
+    KNE_FU = 40,
+    PIECENUMBER_MIN = KNS_HI,
+    PIECENUMBER_MAX = KNE_FU
+};
+
 enum Color {
     BLACK, WHITE, COLOR_NONE
 };
 
 typedef uint8_t PieceKind_t;       // 駒種類
-typedef uint8_t PieceNumber_t;     // 駒番号
-#define MAX_PIECENUMBER    40
+#define NLIST	           38
 
 // 利きの定義
 typedef uint32_t effect_t;
@@ -559,6 +583,48 @@ enum CastleRight {
 };
 #endif
 
+
+enum { nhand = 7, nfile = 9, nrank = 9, nsquare = 81 };
+
+enum KPP{
+    none = 0,
+    f_hand_pawn = 0, // 0
+    e_hand_pawn = f_hand_pawn + 19,
+    f_hand_lance = e_hand_pawn + 19,
+    e_hand_lance = f_hand_lance + 5,
+    f_hand_knight = e_hand_lance + 5,
+    e_hand_knight = f_hand_knight + 5,
+    f_hand_silver = e_hand_knight + 5,
+    e_hand_silver = f_hand_silver + 5,
+    f_hand_gold = e_hand_silver + 5,
+    e_hand_gold = f_hand_gold + 5,
+    f_hand_bishop = e_hand_gold + 5,
+    e_hand_bishop = f_hand_bishop + 3,
+    f_hand_rook = e_hand_bishop + 3,
+    e_hand_rook = f_hand_rook + 3,
+    fe_hand_end = e_hand_rook + 3,
+
+    f_pawn = fe_hand_end,
+    e_pawn = f_pawn + 81,
+    f_lance = e_pawn + 81,
+    e_lance = f_lance + 81,
+    f_knight = e_lance + 81,
+    e_knight = f_knight + 81,
+    f_silver = e_knight + 81,
+    e_silver = f_silver + 81,
+    f_gold = e_silver + 81,
+    e_gold = f_gold + 81,
+    f_bishop = e_gold + 81,
+    e_bishop = f_bishop + 81,
+    f_horse = e_bishop + 81,
+    e_horse = f_horse + 81,
+    f_rook = e_horse + 81,
+    e_rook = f_rook + 81,
+    f_dragon = e_rook + 81,
+    e_dragon = f_dragon + 81,
+    fe_end = e_dragon + 81
+};
+
 /// Score enum keeps a midgame and an endgame value in a single
 /// integer (enum), first LSB 16 bits are used to store endgame
 /// value, while upper bits are used for midgame value. Compiler
@@ -590,6 +656,7 @@ inline void operator/= (T& d, int i) { d = T(int(d) / i); }
 ENABLE_OPERATORS_ON(Value)
 ENABLE_OPERATORS_ON(PieceType)
 ENABLE_OPERATORS_ON(Piece)
+ENABLE_OPERATORS_ON(PieceNumber)
 ENABLE_OPERATORS_ON(Color)
 ENABLE_OPERATORS_ON(Depth)
 ENABLE_OPERATORS_ON(Square)
@@ -827,15 +894,20 @@ inline Square pawn_push(Color c) {
 #if defined(NANOHA)
 
 #define MAX_CHECKS        128        // 王手の最大数
-#define MAX_EVASION        128        // 王手回避の最大数
+#define MAX_EVASION       128        // 王手回避の最大数
 
 namespace NanohaTbl {
-    extern const short z2sq[];
     extern const int Direction[];
     extern const int KomaValue[32];        // 駒の価値
     extern const int KomaValueEx[32];    // 取られたとき(捕獲されたとき)の価値
     extern const int KomaValuePro[32];    // 成る価値
     extern const int Piece2Index[32];    // 駒の種類に変換する({と、杏、圭、全}を金と同一視)
+
+    extern const short z2sq[];
+    extern const KPP KppIndex0[32];    // pieceをkppのindexに変換
+    extern const KPP KppIndex1[32];    // pieceをkppのindexに変換
+    extern const KPP HandIndex0[32];   // kpp_handのindexに変換
+    extern const KPP HandIndex1[32];   // kpp_handのindexに変換
 }
 
 // なのはの座標系(0x11～0x99)を(0～80)に圧縮する
@@ -851,9 +923,7 @@ inline int conv_sq2z(int sq)
     return (x+1)*0x10+(y+1);
 }
 
-#if defined(_MSC_VER)
-
-#elif defined(__GNUC__)
+#if defined(__GNUC__)
 inline unsigned char _BitScanForward(unsigned long * Index, unsigned long Mask)
 {
     if (Mask == 0) return 0;
@@ -861,9 +931,9 @@ inline unsigned char _BitScanForward(unsigned long * Index, unsigned long Mask)
     return 1;
 }
 
-#define __assume(x)        // MS のコンパイラのコード生成のヒントだが、gccでは無効なため
-
-#endif    // defined(__GNUC__)
+// MS のコンパイラのコード生成のヒントだが、gccでは無効なため
+#define __assume(x) __builtin_unreachable()
+#endif // defined(__GNUC__)
 
 inline unsigned int PopCnt32(unsigned int value)
 {

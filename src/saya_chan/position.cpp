@@ -581,7 +581,7 @@ const string Position::to_fen() const {
                 }
 #if defined(NANOHA)
                 if ((piece_on(sq) & ~GOTE) != OU &&
-                    (piece_on(sq) & PROMOTED) != 0) {
+                    ((piece_on(sq) - 1) & PROMOTED) != 0) {
                     fen << "+";
                 }
 #endif
@@ -754,7 +754,7 @@ void Position::print_csa(Move move) const {
     if ((n = h.getHI()) > 0) while (n--){ cout << "00HI"; }
     }
     cout << endl << (sideToMove == BLACK ? '+' : '-') << endl;
-    cout << "SFEN is: " << to_fen() << "\nKey is: 0x" << std::hex << st->key << endl;
+    cout << "SFEN is: " << to_fen() << "\nKey is: 0x" << std::hex << st->key << std::dec << endl;
 }
 #endif
 

@@ -1767,8 +1767,8 @@ int Position::Mate3(const Color us, Move &m)
         StateInfo newSt;
         Move move = cur->move;
         // 残り３手では打ち歩詰めを回避する必要はないため、不成は読まない
-//        if ((m & MOVE_CHECK_NARAZU) && isUchifudume == false) continue;
-        if ((m & MOVE_CHECK_NARAZU)) continue;
+//        if ((move & MOVE_CHECK_NARAZU) && isUchifudume == false) continue;
+        if ((move & MOVE_CHECK_NARAZU)) continue;
         do_move(move, newSt);
         int val;
         val = EvasionRest2(flip(us), last);
