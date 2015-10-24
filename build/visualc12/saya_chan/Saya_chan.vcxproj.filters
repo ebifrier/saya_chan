@@ -18,132 +18,129 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\src\saya_chan\search.cpp">
+    <ClCompile Include="..\..\..\src\benchmark.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\shogi.cpp">
+    <ClCompile Include="..\..\..\src\book.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\thread.cpp">
+    <ClCompile Include="..\..\..\src\evaluate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\timeman.cpp">
+    <ClCompile Include="..\..\..\src\kif.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\tt.cpp">
+    <ClCompile Include="..\..\..\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\uci.cpp">
+    <ClCompile Include="..\..\..\src\mate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\ucioption.cpp">
+    <ClCompile Include="..\..\..\src\mate1ply.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\benchmark.cpp">
+    <ClCompile Include="..\..\..\src\misc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\book.cpp">
+    <ClCompile Include="..\..\..\src\move.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\evaluate.cpp">
+    <ClCompile Include="..\..\..\src\movegen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\main.cpp">
+    <ClCompile Include="..\..\..\src\movepick.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\mate.cpp">
+    <ClCompile Include="..\..\..\src\position.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\mate1ply.cpp">
+    <ClCompile Include="..\..\..\src\problem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\misc.cpp">
+    <ClCompile Include="..\..\..\src\search.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\move.cpp">
+    <ClCompile Include="..\..\..\src\shogi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\movegen.cpp">
+    <ClCompile Include="..\..\..\src\thread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\movepick.cpp">
+    <ClCompile Include="..\..\..\src\timeman.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\position.cpp">
+    <ClCompile Include="..\..\..\src\tt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\problem.cpp">
+    <ClCompile Include="..\..\..\src\uci.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\test\mate_test.cpp">
+    <ClCompile Include="..\..\..\src\ucioption.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\test\sfen_test.cpp">
       <Filter>test</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\kif.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\test\kif_test.cpp">
+    <ClCompile Include="..\..\..\src\test\kif_test.cpp">
       <Filter>test</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\saya_chan\test\sfen_test.cpp">
+    <ClCompile Include="..\..\..\src\test\mate_test.cpp">
       <Filter>test</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\src\saya_chan\search.h">
+    <ClInclude Include="..\..\..\src\book.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\thread.h">
+    <ClInclude Include="..\..\..\src\evaluate.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\timeman.h">
+    <ClInclude Include="..\..\..\src\history.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\tt.h">
+    <ClInclude Include="..\..\..\src\lock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\types.h">
+    <ClInclude Include="..\..\..\src\misc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\ucioption.h">
+    <ClInclude Include="..\..\..\src\move.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\book.h">
+    <ClInclude Include="..\..\..\src\movegen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\evaluate.h">
+    <ClInclude Include="..\..\..\src\movepick.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\history.h">
+    <ClInclude Include="..\..\..\src\param.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\lock.h">
+    <ClInclude Include="..\..\..\src\param_new.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\misc.h">
+    <ClInclude Include="..\..\..\src\position.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\move.h">
+    <ClInclude Include="..\..\..\src\rkiss.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\movegen.h">
+    <ClInclude Include="..\..\..\src\search.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\movepick.h">
+    <ClInclude Include="..\..\..\src\thread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\param.h">
+    <ClInclude Include="..\..\..\src\timeman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\param_micro.h">
+    <ClInclude Include="..\..\..\src\tt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\position.h">
+    <ClInclude Include="..\..\..\src\types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\rkiss.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\saya_chan\param_new.h">
+    <ClInclude Include="..\..\..\src\ucioption.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
