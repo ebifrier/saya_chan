@@ -2259,25 +2259,23 @@ Value Position::compute_non_pawn_material(Color c) const {
 
 #if defined(NANOHA)
 bool Position::is_draw(int *ret) const {
-//bool Position::is_draw(int& ret) const {
-    //ret=0;
     int i = 5, e = st->pliesFromNull;
 
     if (i <= e)
     {
         StateInfo* stp = st->previous->previous;
         int rept = 0;
-        bool cont_check = (st->previous->effect && stp->previous->effect) ? true : false;
+        bool cont_check = (st->effect && stp->effect) ? true : false;
 
         do {
             stp = stp->previous->previous;
-            if (stp->previous->effect == 0) cont_check = false;
+            if (stp->effect == 0) cont_check = false;
 
             if (stp->key == st->key && stp->hand == st->hand) {
                 rept++;
                 // 過去に3回(現局面含めて4回)出現していたら千日手.
                 if (rept >= 3) {
-                    if (cont_check) {*ret = -1; return false; }
+                    if (cont_check) {*ret = +1; return false; }
                     return true;
                 }
             }
