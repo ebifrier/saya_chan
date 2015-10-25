@@ -1374,6 +1374,9 @@ split_point_start: // At split points actual search starts from here
             pos.do_move(move, st, ci, givesCheck);
 #endif
 
+            // なんかないとダメらしい (thanks 2ch)
+            (ss + 1)->checkmateTested = false;
+
             // Step extra. pv search (only in PV nodes)
             // The first move in list is the expected PV
             if (isPvMove)
