@@ -106,7 +106,7 @@ OptionsMap::OptionsMap() {
     o["Minimum Thinking Time"] = UCIOption(20, 0, 5000);
 #if defined(NANOHA)
     // 引き分け(千日手)の点数
-    o["DrawValue"] = UCIOption(-20000/*0*/, -30000, 30000);
+    o["DrawValue"] = UCIOption(0, -30000, 30000);
     o["Output_AllDepth"] = UCIOption(false);
     o["ByoyomiMargin"] = UCIOption(200, 0, 3000);
 #endif
