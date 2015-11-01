@@ -46,7 +46,11 @@ namespace {
     // Keep track of position keys along the setup moves (from start position to the
     // position just before to start searching). This is needed by draw detection
     // where, due to 50 moves rule, we need to check at most 100 plies back.
+#if defined(NANOHA)
+    StateInfo StateRingBuf[512], *SetupState = StateRingBuf;
+#else
     StateInfo StateRingBuf[102], *SetupState = StateRingBuf;
+#endif
 
     void set_option(istringstream& up);
     void set_position(Position& pos, istringstream& up);
@@ -192,6 +196,7 @@ namespace {
 
 #if defined(NANOHA)
         pos.from_fen(fen);
+        SetupState = StateRingBuf;
 #else
         pos.from_fen(fen, Options["UCI_Chess960"].value<bool>());
 #endif
@@ -199,11 +204,15 @@ namespace {
         // Parse move list (if any)
         while (is >> token && (m = move_from_uci(pos, token)) != MOVE_NONE)
         {
+#if defined(NANOHA)
+            pos.do_move(m, *SetupState++);
+#else
             pos.do_move(m, *SetupState);
 
             // Increment pointer to StateRingBuf circular buffer
             if (++SetupState - StateRingBuf >= 102)
                 SetupState = StateRingBuf;
+#endif
         }
     }
 
