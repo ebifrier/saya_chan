@@ -30,9 +30,10 @@
 #else
 // Aperyの評価値
 #include "param_new.h"
-#define FV_KPP "KPP_synthesized.bin" 
-#define FV_KKP "KKP_synthesized.bin" 
-#define FV_KK  "KK_synthesized.bin" 
+#define FV_KPP  "KPP_synthesized.bin" 
+#define FV_KPP2 "KPP_synthesized2.bin" 
+#define FV_KKP  "KKP_synthesized.bin" 
+#define FV_KK   "KK_synthesized.bin" 
 #endif
 
 #define FV_SCALE            32
@@ -44,6 +45,7 @@
 #define HAND_W              (this->hand[WHITE].h)
 
 #define Inv(sq)             (nsquare-1-sq)
+#define PcPcOnSq(sq,i,j)    pc_on_sq[sq][(i)*((i)+1)/2+(j)]
 
 #define I2HandPawn(hand)    (((hand) & HAND_FU_MASK) >> HAND_FU_SHIFT)
 #define I2HandLance(hand)   (((hand) & HAND_KY_MASK) >> HAND_KY_SHIFT)
@@ -52,6 +54,9 @@
 #define I2HandGold(hand)    (((hand) & HAND_KI_MASK) >> HAND_KI_SHIFT)
 #define I2HandBishop(hand)  (((hand) & HAND_KA_MASK) >> HAND_KA_SHIFT)
 #define I2HandRook(hand)    (((hand) & HAND_HI_MASK) >> HAND_HI_SHIFT)
+
+enum { pos_n = fe_end * (fe_end + 1) / 2 };
+typedef short pc_on_pc_entry[pos_n];
 
 typedef short kkp_entry[fe_end];
 short kpp3[nsquare][fe_end][fe_end];
@@ -126,6 +131,7 @@ void Position::init_evaluate()
     int iret = 0;
 
 	//KPP
+#if 0
 	do {
 		fp = fopen(FV_KPP, "rb");
 		if (fp == NULL) { iret = -2; break; }
@@ -136,6 +142,41 @@ void Position::init_evaluate()
 
 	} while (0);
 	if (fp) fclose(fp);
+#else
+    pc_on_pc_entry *pc_on_sq = new pc_on_pc_entry[nsquare];
+
+    do {
+        fp = fopen(FV_KPP2, "rb");
+        if (fp == NULL) { iret = -2; break; }
+
+        size = nsquare * pos_n;
+        if (fread(pc_on_sq, sizeof(short), size, fp) != size){ iret = -2; break; }
+        if (fgetc(fp) != EOF) { iret = -2; break; }
+    } while (0);
+    if (fp) fclose(fp);
+
+    for (int sq = 0; sq < nsquare; ++sq) {
+        for (int k = 0; k < fe_end; k++){
+            for (int j = 0; j < fe_end; j++){
+                short value = (k <= j ? PcPcOnSq(sq, j, k) : PcPcOnSq(sq, k, j));
+#if 0
+                if (kpp3[sq][k][j] != value) {
+                    std::cerr << "Failed to load '"FV_KPP2"' file." << std::endl;
+                    iret = -3;
+                    goto exit_label;
+                }
+#endif
+                kpp3[sq][k][j] = value;
+            }
+        }
+    }
+#if 0
+exit_label:;
+#endif
+
+    delete[] pc_on_sq;
+    pc_on_sq = NULL;
+#endif
 
 	//KKP
 	do {
