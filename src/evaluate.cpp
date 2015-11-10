@@ -55,8 +55,8 @@
 
 typedef short kkp_entry[fe_end];
 short kpp3[nsquare][fe_end][fe_end];
-long kkp[nsquare][nsquare][fe_end];
-long kk[nsquare][nsquare];
+int kkp[nsquare][nsquare][fe_end];
+int kk[nsquare][nsquare];
 
 namespace NanohaTbl {
     const short z2sq[] = {
@@ -143,7 +143,7 @@ void Position::init_evaluate()
 		if (fp == NULL) { iret = -2; break; }
 
 		size = nsquare * nsquare * fe_end;
-		if (fread(kkp, sizeof(long), size, fp) != size){ iret = -2; break; }
+		if (fread(kkp, sizeof(int), size, fp) != size){ iret = -2; break; }
 		if (fgetc(fp) != EOF) { iret = -2; break; }
 
 	} while (0);
@@ -155,7 +155,7 @@ void Position::init_evaluate()
 		if (fp == NULL) { iret = -2; break; }
 
 		size = nsquare * nsquare;
-		if (fread(kk, sizeof(long), size, fp) != size){ iret = -2; break; }
+		if (fread(kk, sizeof(int), size, fp) != size){ iret = -2; break; }
 		if (fgetc(fp) != EOF) { iret = -2; break; }
 
 	} while (0);
