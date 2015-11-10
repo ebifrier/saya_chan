@@ -2263,19 +2263,24 @@ bool Position::is_draw(int *ret) const {
 
     if (i <= e)
     {
-        StateInfo* stp = st->previous->previous;
+        StateInfo* stp = st->previous;
+        bool oppInCheck = (stp->effect != 0);
+        stp = stp->previous;
+        bool curInCheck = (stp->effect != 0) && (st->effect != 0);
+
         int rept = 0;
-        bool cont_check = (st->effect && stp->effect) ? true : false;
-
         do {
-            stp = stp->previous->previous;
-            if (stp->effect == 0) cont_check = false;
+            stp = stp->previous;
+            if (stp->effect == 0) oppInCheck = false;
+            stp = stp->previous;
+            if (stp->effect == 0) curInCheck = false;
 
-            if (stp->key == st->key && stp->hand == st->hand) {
-                rept++;
+            if (stp->key == st->key) {
+
                 // 過去に3回(現局面含めて4回)出現していたら千日手.
-                if (rept >= 3) {
-                    if (cont_check) {*ret = +1; return false; }
+                if (stp->hand == st->hand && ++rept >= 3) {
+                    if (oppInCheck) { *ret = -1; return false; } // 負け : 王手回避された局面で千日手
+                    if (curInCheck) { *ret = +1; return false; } // 勝ち : 王手された局面で千日手
                     return true;
                 }
             }
