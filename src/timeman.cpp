@@ -20,6 +20,7 @@
 */
 
 #include <cmath>
+#include <iostream>
 
 #include "misc.h"
 #include "search.h"
@@ -78,7 +79,7 @@ namespace {
     enum TimeType { OptimumTime, MaxTime };
 
     template<TimeType>
-    int remaining(int myTime, int movesToGo, int currentPly);
+    int remaining(int myTime, int movesToGo, int currentPly, int slowMover);
 }
 
 
@@ -113,6 +114,7 @@ void TimeManager::init(const SearchLimits& limits, int currentPly)
     int emergencyBaseTime    = Options["Emergency Base Time"].value<int>();
     int emergencyMoveTime    = Options["Emergency Move Time"].value<int>();
     int minThinkingTime      = Options["Minimum Thinking Time"].value<int>();
+	int slowMover            = Options["Slow_Mover"].value<int>();
 
     // Initialize to maximum values but unstablePVExtraTime that is reset
     unstablePVExtraTime = 0;
@@ -132,8 +134,8 @@ void TimeManager::init(const SearchLimits& limits, int currentPly)
 
         hypMyTime = Max(hypMyTime, 0);
 
-        t1 = minThinkingTime + remaining<OptimumTime>(hypMyTime, hypMTG, currentPly);
-        t2 = minThinkingTime + remaining<MaxTime>(hypMyTime, hypMTG, currentPly);
+        t1 = minThinkingTime + remaining<OptimumTime>(hypMyTime, hypMTG, currentPly, slowMover);
+        t2 = minThinkingTime + remaining<MaxTime>(hypMyTime, hypMTG, currentPly, slowMover);
 
         optimumSearchTime = Min(optimumSearchTime, t1);
         maximumSearchTime = Min(maximumSearchTime, t2);
@@ -146,15 +148,17 @@ void TimeManager::init(const SearchLimits& limits, int currentPly)
     maximumSearchTime += limits.maxTime;
     // Make sure that maxSearchTime is not over absoluteMaxSearchTime
     optimumSearchTime = Min(optimumSearchTime, maximumSearchTime);
+
+	std::cout << "info string optimum_search_time = " << optimumSearchTime << std::endl;
+    std::cout << "info string maximum_search_time = " << maximumSearchTime << std::endl;
 }
 
 
 namespace {
 
     template<TimeType T>
-    int remaining(int myTime, int movesToGo, int currentPly)
+    int remaining(int myTime, int movesToGo, int currentPly, int slowMover)
     {
-        int slowMover = 30; // かなりの終盤型だがそれっぽく時間を使うので18で。本来はオプションで設定する項目
         const float TMaxRatio   = (T == OptimumTime ? 1 : MaxRatio);
         const float TStealRatio = (T == OptimumTime ? 0 : StealRatio);
 

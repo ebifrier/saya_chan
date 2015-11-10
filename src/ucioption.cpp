@@ -67,60 +67,32 @@ static string stringify(const T& v) {
 
 OptionsMap::OptionsMap() {
 
+	int cpus = Min(cpu_count(), MAX_THREADS);
+	int msd = cpus < 8 ? 4 : 7;
     OptionsMap& o = *this;
 
-    // 定跡
-    o["OwnBook"] = UCIOption(true);
-    o["RandomBookSelect"] = UCIOption(true);
-#if defined(NANOHA)
-    o["BookFile"] = UCIOption("book_40.jsk");
-#else
-    o["BookFile"] = UCIOption("book.bin");
-#endif
-#if defined(NANOHA)
-    o["Ponder"] = UCIOption(false);
-#else
-    o["Ponder"] = UCIOption(true);
-#endif
-    o["Threads"] = UCIOption(1, 1, MAX_THREADS);
-    o["Hash"] = UCIOption(256, 4, 8192);
-
-    o["Use Search Log"] = UCIOption(false);
-    o["Search Log Filename"] = UCIOption("SearchLog.txt");
-    o["Minimum Split Depth"] = UCIOption(4, 4, 7);
+    o["OwnBook"]                                   = UCIOption(true);
+    o["RandomBookSelect"]                          = UCIOption(true);
+    o["BookFile"]                                  = UCIOption("book_40.jsk");
+    o["Ponder"]                                    = UCIOption(false);
+    o["Threads"]                                   = UCIOption(1, 1, MAX_THREADS);
+    o["Hash"]                                      = UCIOption(256, 4, 8192);
+    o["Use Search Log"]                            = UCIOption(false);
+    o["Search Log Filename"]                       = UCIOption("SearchLog.txt");
+    o["Minimum Split Depth"]                       = UCIOption(msd, 4, 7);////
     o["Maximum Number of Threads per Split Point"] = UCIOption(5, 4, 8);
-    o["Use Sleeping Threads"] = UCIOption(false);
-    o["Clear Hash"] = UCIOption(false, "button");
-    o["MultiPV"] = UCIOption(1, 1, 500);
-    o["Skill Level"] = UCIOption(20, 0, 20);
-#if defined(NANOHA)
-    // TODO: 要調整；時間制御のパラメータ
-    o["Emergency Move Horizon"] = UCIOption(50, 0, 60);
-    o["Emergency Base Time"] = UCIOption(20000, 0, 30000);
-    o["Emergency Move Time"] = UCIOption(1000, 0, 5000);
-#else
-    o["Emergency Move Horizon"] = UCIOption(40, 0, 50);
-    o["Emergency Base Time"] = UCIOption(200, 0, 30000);
-    o["Emergency Move Time"] = UCIOption(70, 0, 5000);
-#endif
-    o["Minimum Thinking Time"] = UCIOption(20, 0, 5000);
-#if defined(NANOHA)
-    // 引き分け(千日手)の点数
-    o["DrawValue"] = UCIOption(0, -30000, 30000);
-    o["Output_AllDepth"] = UCIOption(false);
-    o["ByoyomiMargin"] = UCIOption(200, 0, 3000);
-#endif
-
-    // Set some SMP parameters accordingly to the detected CPU count
-    UCIOption& thr = o["Threads"];
-    UCIOption& msd = o["Minimum Split Depth"];
-
-    // スレッド数
-    int thr_num = Min(cpu_count(), MAX_THREADS);
-    thr.defaultValue = thr.currentValue = stringify(thr_num);
-
-    if (cpu_count() >= 8)
-        msd.defaultValue = msd.currentValue = stringify(7);
+    o["Use Sleeping Threads"]                      = UCIOption(false);
+    o["Clear Hash"]                                = UCIOption(false, "button");
+    o["MultiPV"]                                   = UCIOption(1, 1, 500);
+    o["Skill Level"]                               = UCIOption(20, 0, 20);
+    o["Emergency Move Horizon"]                    = UCIOption(50, 0, 60);
+    o["Emergency Base Time"]                       = UCIOption(20000, 0, 30000);
+    o["Emergency Move Time"]                       = UCIOption(1000, 0, 5000);
+    o["Minimum Thinking Time"]                     = UCIOption(20, 0, 5000);
+    o["DrawValue"]                                 = UCIOption(0, -30000, 30000);
+    o["Output_AllDepth"]                           = UCIOption(false);
+    o["ByoyomiMargin"]                             = UCIOption(0, -10000, 10000);
+	o["Slow_Mover"]                                = UCIOption(120, 10, 1000);
 }
 
 
