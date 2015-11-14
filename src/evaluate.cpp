@@ -181,46 +181,79 @@ void Position::init_evaluate()
 	size_t size;
     int iret = 0;
 
-	//KPP
-	do {
-		fp = fopen(FV_KPP, "rb");
-		if (fp == NULL) { iret = -2; break; }
+#if 0
+    //KPP
+    do {
+        fp = fopen(FV_KPP, "rb");
+        if (fp == NULL) { iret = -2; break; }
 
-		size = nsquare * fe_end * fe_end;
+        size = nsquare * fe_end * fe_end;
         if (fread(kpp3, sizeof(int16_t), size, fp) != size){ iret = -2; break; }
-		if (fgetc(fp) != EOF) { iret = -2; break; }
+        if (fgetc(fp) != EOF) { iret = -2; break; }
 
-	} while (0);
-	if (fp) fclose(fp);
+    } while (0);
+    if (fp) fclose(fp);
+#else
+    pc_on_pc_entry *pc_on_sq = new pc_on_pc_entry[nsquare];
+
+    do {
+        fp = fopen(FV_KPP2, "rb");
+        if (fp == NULL) { iret = -2; break; }
+
+        size = nsquare * pos_n;
+        if (fread(pc_on_sq, sizeof(short), size, fp) != size){ iret = -2; break; }
+        if (fgetc(fp) != EOF) { iret = -2; break; }
+    } while (0);
+    if (fp) fclose(fp);
+
+    for (int sq = 0; sq < nsquare; ++sq) {
+        for (int k = 0; k < fe_end; k++){
+            for (int j = 0; j < fe_end; j++){
+                short value = (k <= j ? PcPcOnSq(sq, j, k) : PcPcOnSq(sq, k, j));
+#if 0
+                if (kpp3[sq][k][j] != value) {
+                    std::cerr << "Failed to load '"FV_KPP2"' file." << std::endl;
+                    iret = -3;
+                    exit(-1);
+                }
+#endif
+                kpp3[sq][k][j] = value;
+            }
+        }
+    }
+
+    delete[] pc_on_sq;
+    pc_on_sq = NULL;
+#endif
 
 	//KKP
-	do {
-		fp = fopen(FV_KKP, "rb");
-		if (fp == NULL) { iret = -2; break; }
+    do {
+        fp = fopen(FV_KKP, "rb");
+        if (fp == NULL) { iret = -2; break; }
 
-		size = nsquare * nsquare * fe_end;
+        size = nsquare * nsquare * fe_end;
         if (fread(kkp, sizeof(int32_t), size, fp) != size){ iret = -2; break; }
-		if (fgetc(fp) != EOF) { iret = -2; break; }
+        if (fgetc(fp) != EOF) { iret = -2; break; }
 
-	} while (0);
-	if (fp) fclose(fp);
+    } while (0);
+    if (fp) fclose(fp);
 
 	//KK
 	do {
-		fp = fopen(FV_KK, "rb");
-		if (fp == NULL) { iret = -2; break; }
+        fp = fopen(FV_KK, "rb");
+        if (fp == NULL) { iret = -2; break; }
 
-		size = nsquare * nsquare;
+        size = nsquare * nsquare;
         if (fread(kk, sizeof(int32_t), size, fp) != size){ iret = -2; break; }
-		if (fgetc(fp) != EOF) { iret = -2; break; }
+        if (fgetc(fp) != EOF) { iret = -2; break; }
 
-	} while (0);
-	if (fp) fclose(fp);
+    } while (0);
+    if (fp) fclose(fp);
 
-	if (iret < 0) {
-		std::cerr << "Can't load '*_synthesized' file." << std::endl;
+    if (iret < 0) {
+        std::cerr << "Can't load '*_synthesized' file." << std::endl;
         exit(-1);
-	}
+    }
 
     ehash_clear();
 }
