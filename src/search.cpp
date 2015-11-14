@@ -40,6 +40,7 @@
 #include "thread.h"
 #include "tt.h"
 #include "ucioption.h"
+#include "param_new.h"
 
 #if defined(GODWHALE_CLIENT)
 #include "../sayachan_if.h"
@@ -48,7 +49,8 @@
 #if defined(NANOHA)
 # define NANOHA_CHECKMATE3
 # define NANOHA_CHECKMATE3_QUIESCE
-# define NANOHA_DFPN
+////# define NANOHA_DFPN
+#define TEST
 #endif
 
 using std::cout;
@@ -81,7 +83,7 @@ namespace {
 #if defined(NANOHA)
         void insert_pv_in_tt_rec(Position& pos,int ply);
 #endif
-        void insert_pv_in_tt(Position& pos);
+		void insert_pv_in_tt(Position& pos);
 
         int64_t nodes;
         Value score;
@@ -337,6 +339,37 @@ namespace {
 #endif
 
         return Min(result, ONE_PLY);
+    }
+
+    // 差分計算用の評価値を設定して、指し手を一つ進めます。
+    void do_move_with_eval(Position& pos, Move m, StateInfo& st, SearchStack *ss)
+    {
+        pos.do_move(m, st);
+
+#if defined(EVAL_DIFF)
+        // 今の局面の評価値を要再計算状態にします。
+        (ss + 1)->staticEvalRaw = Value(INT_MAX);
+#endif
+    }
+
+    // 差分計算用の評価値を設定して、パスの手を一つ進めます。
+    // （局面は変わっていないため評価値は前と同じ数値を使うことができます）
+    void do_null_move_with_eval(Position& pos, StateInfo& st, SearchStack *ss)
+    {
+        pos.do_null_move(st);
+
+#if defined(EVAL_DIFF)
+        // 今の局面の評価値を前の評価値と同じにします。
+        (ss + 1)->staticEvalRaw = ss->staticEvalRaw;
+#endif
+    }
+
+    // 差分計算用の評価値をクリアします。
+    void clear_eval(SearchStack *ss)
+    {
+#if defined(EVAL_DIFF)
+        (ss + 1)->staticEvalRaw = ss->staticEvalRaw = Value(INT_MAX);
+#endif
     }
 
 } // namespace
@@ -632,7 +665,7 @@ namespace {
         {
 #if defined(NANOHA)
             // 将棋で Stalemate は投了.
-            cout << "info" << depth_to_uci(DEPTH_ZERO)
+            cout << "info depth 0 score "
                  << score_to_uci(-VALUE_MATE, alpha, beta) << endl;
 #else
             cout << "info" << depth_to_uci(DEPTH_ZERO)
@@ -676,6 +709,8 @@ namespace {
                 // Start with a small aspiration window and, in case of fail high/low,
                 // research with bigger window until not failing high/low anymore.
                 do {
+                    clear_eval(ss);
+
                     // Search starting from ss+1 to allow referencing (ss-1). This is
                     // needed by update_gains() and ss copy when splitting at Root.
                     value = search<Root>(pos, ss+1, alpha, beta, depth * ONE_PLY);
@@ -694,8 +729,10 @@ namespace {
 
                     // Write PV back to transposition table in case the relevant entries
                     // have been overwritten during the search.
-                    for (int i = 0; i <= MultiPVIteration; i++)
-                        Rml[i].insert_pv_in_tt(pos);
+                    for (int i = 0; i <= MultiPVIteration; i++) {
+                        clear_eval(ss);
+						Rml[i].insert_pv_in_tt(pos);
+					}
 
                     // Value cannot be trusted. Break out immediately!
                     if (StopRequest)
@@ -766,6 +803,18 @@ namespace {
                 easyMove = bestMove;
             else if (bestMove != easyMove)
                 easyMove = MOVE_NONE;
+
+#if defined(TEST) ////mateだったら即指す
+			if (!Limits.ponder
+				&& !StopRequest
+				&& depth >= 5
+				&& abs(bestValues[depth]) >= VALUE_MATE_IN_PLY_MAX
+				&& abs(bestValues[depth - 1]) >= VALUE_MATE_IN_PLY_MAX)
+			{
+				depth = Limits.maxDepth;
+				StopRequest = true;
+			}
+#endif
 
             // Check for some early stop condition
             if (!StopRequest && Limits.useTimeManagement())
@@ -991,7 +1040,8 @@ namespace {
         }
         else
         {
-            refinedValue = ss->eval = evaluate(pos, ss->evalMargin);
+			refinedValue = ss->eval = pos.evaluate(pos.side_to_move(), ss);
+			ss->evalMargin = VALUE_NONE;
 #if defined(NANOHA)
             TT.store(posKey, pos.hand_value_of_side(), VALUE_NONE, VALUE_TYPE_NONE, DEPTH_NONE, MOVE_NONE, ss->eval, ss->evalMargin);
 #else
@@ -1061,7 +1111,7 @@ namespace {
             if (refinedValue - PawnValueMidgame > beta)
                 R++;
 
-            pos.do_null_move(st);
+            do_null_move_with_eval(pos, st, ss);
             (ss+1)->skipNullMove = true;
             nullValue = depth-R*ONE_PLY < ONE_PLY ? -qsearch<NonPV>(pos, ss+1, -beta, -alpha, DEPTH_ZERO)
                                                   : - search<NonPV>(pos, ss+1, -beta, -alpha, depth-R*ONE_PLY);
@@ -1125,17 +1175,9 @@ namespace {
 #endif
 
             while ((move = mp.get_next_move()) != MOVE_NONE)
-#if defined(NANOHA)
                 if (pos.pl_move_is_legal(move))
-#else
-                if (pos.pl_move_is_legal(move, ci.pinned))
-#endif
                 {
-#if defined(NANOHA)
-                    pos.do_move(move, st);
-#else
-                    pos.do_move(move, st, ci, pos.move_gives_check(move, ci));
-#endif
+                    do_move_with_eval(pos, move, st, ss);
                     value = -search<NonPV>(pos, ss+1, -rbeta, -rbeta+1, rdepth);
                     pos.undo_move(move);
                     if (value >= rbeta)
@@ -1368,11 +1410,7 @@ split_point_start: // At split points actual search starts from here
                 movesSearched[playedMoveCount++] = move;
 
             // Step 14. Make the move
-#if defined(NANOHA)
-            pos.do_move(move, st);
-#else
-            pos.do_move(move, st, ci, givesCheck);
-#endif
+            do_move_with_eval(pos, move, st, ss);
 
             // なんかないとダメらしい (thanks 2ch)
             (ss + 1)->checkmateTested = false;
@@ -1657,7 +1695,10 @@ split_point_start: // At split points actual search starts from here
                 ss->eval = bestValue = tte->static_value();
             }
             else
-                ss->eval = bestValue = evaluate(pos, evalMargin);
+			{
+				ss->eval = bestValue = pos.evaluate(pos.side_to_move(), ss);
+				evalMargin = VALUE_NONE;
+			}
 
             // Stand pat. Return immediately if static value is at least beta
             if (bestValue >= beta)
@@ -1789,11 +1830,7 @@ split_point_start: // At split points actual search starts from here
             ss->currentMove = move;
 
             // Make and search the move
-#if defined(NANOHA)
-            pos.do_move(move, st);
-#else
-            pos.do_move(move, st, ci, givesCheck);
-#endif
+            do_move_with_eval(pos, move, st, ss);
             value = -qsearch<NT>(pos, ss+1, -beta, -alpha, depth-ONE_PLY);
             pos.undo_move(move);
 
@@ -2174,8 +2211,8 @@ split_point_start: // At split points actual search starts from here
         std::stringstream s;
 
 #if defined(NANOHA)
-        if (abs(v) < VALUE_MATE - PLY_MAX * ONE_PLY)
-            s << " score cp " << int(v);
+        if (abs(v) < VALUE_MATE_IN_PLY_MAX)
+            s << " score cp " << int(v) * 100 / DPawn;
         else
             s << " score mate " << (v > 0 ? VALUE_MATE - v + 1 : -VALUE_MATE - v) / 2;
 #else
@@ -2595,7 +2632,7 @@ split_point_start: // At split points actual search starts from here
     // the PV back into the TT. This makes sure the old PV moves are searched
     // first, even if the old TT entries have been overwritten.
 
-    void RootMove::insert_pv_in_tt(Position& pos) {
+	void RootMove::insert_pv_in_tt(Position& pos) {
 
         StateInfo state[PLY_MAX_PLUS_2], *st = state;
         TTEntry* tte;
@@ -2616,7 +2653,8 @@ split_point_start: // At split points actual search starts from here
             // Don't overwrite existing correct entries
             if (!tte || tte->move() != pv[ply])
             {
-                v = (pos.in_check() ? VALUE_NONE : evaluate(pos, m));
+				////v = (pos.in_check() ? VALUE_NONE : pos.evaluate(pos, m));//バグの原因と思われる
+
 #if defined(NANOHA)
                 TT.store(k, pos.hand_value_of_side(), VALUE_NONE, VALUE_TYPE_NONE, DEPTH_NONE, pv[ply], v, m);
 #else

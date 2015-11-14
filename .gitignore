@@ -3,6 +3,7 @@ Debug/
 Release/
 bin/
 obj/
+old/
 ipch/
 log/
 

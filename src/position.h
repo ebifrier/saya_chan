@@ -31,6 +31,7 @@
 #endif
 #include "move.h"
 #include "types.h"
+#include "search.h"
 
 #if !defined(NANOHA)
 /// The checkInfo struct is initialized at c'tor time and keeps info used
@@ -68,12 +69,16 @@ struct StateInfo {
     PieceNumber kncap;  // 捕った持駒の駒番号
 
 #if defined(MAKELIST_DIFF)
-    Piece cap_hand;     // 捕獲した持駒のPiece
-    Piece drop_hand;    // 打った持駒のPiece
+    Piece capHand;     // 捕獲した持駒のPiece
+    Piece dropHand;    // 打った持駒のPiece
     PieceNumber kndrop; // 打った持駒の駒番号
-    int caplist[2];     // 捕獲される駒のlist
-    int droplist[2];    // 打つ持駒のlist
-    int fromlist[2];    // 動かす駒のlist
+    int oldcap[2];      // 捕獲される駒のlist
+    int oldlist[2];     // 動かす駒,打つ持駒のlist
+#endif
+#if defined(EVAL_DIFF)
+    int newcap[2];      // for cap
+    int newlist[2];     // for drop, slide
+    int changeType;     // changetype king=0, drop&nocap=1, cap=2 
 #endif
 
 #else
@@ -315,12 +320,10 @@ public:
     // 局面の評価
     static void init_evaluate();
     int make_list_correct(int list0[], int list1[]) const;
-    int evaluate_correct(const Color us) const;
-
-    int make_list(int list0[NLIST], int list1[NLIST]);
-    int evaluate_body(const Color us);
-
-    int evaluate(const Color us);
+    int evaluate_raw_correct() const;
+    Value evaluate_correct(const Color us) const;
+    int evaluate_raw_body(const Color us);
+    Value evaluate(const Color us, SearchStack* ss);
 
     // 稲庭判定(bInaniwa にセットするため const でない)
     bool IsInaniwa(const Color us);
@@ -521,7 +524,6 @@ private:
 #endif
 
 #if defined(MAKELIST_DIFF)
-    int evaluate_make_list_diff(const Color us);
     void init_make_list();
     void make_list_move(PieceNumber kn, Piece piece, Square to);
     void make_list_undo_move(PieceNumber kn);
@@ -529,12 +531,18 @@ private:
     void make_list_undo_capture(PieceNumber kn);
     PieceNumber make_list_drop(Piece piece, Square to);
     void make_list_undo_drop(PieceNumber kn, Piece piece);
+    int evaluate_make_list_diff(const Color us);
 
     int list0[PIECENUMBER_MAX + 1]; //駒番号numの評価関数用list0
     int list1[PIECENUMBER_MAX + 1]; //駒番号numの評価関数用list1
 
     PieceNumber listkn[90]; //list0の駒番号num
     int handcount[32]; //Pieceの持駒枚数
+
+#if defined(EVAL_DIFF)
+    int doapc(const int index[2]) const;
+    bool calcDifference(SearchStack* ss) const;
+#endif
 #endif
 
     // Other info
