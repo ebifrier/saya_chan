@@ -503,7 +503,7 @@ void bench_eval(int argc, char* argv[]) {
 #endif
     int j;
     volatile Value v = VALUE_ZERO;
-    Value m = VALUE_ZERO;
+	SearchStack ss[PLY_MAX_PLUS_2];
     for (size_t i = 0; i < sfenList.size(); i++)
     {
         Position pos(sfenList[i], 0);
@@ -511,20 +511,22 @@ void bench_eval(int argc, char* argv[]) {
         int failState;
         assert(pos.is_ok(&failState));
 #endif
-        if (pos.evaluate(BLACK) != pos.evaluate_correct(BLACK)) {
+        Value value = pos.evaluate(pos.side_to_move(), ss);
+        Value correct = pos.evaluate_correct(pos.side_to_move());
+        if (value != correct) {
             cerr << "evaluate_new has error" << endl;
-            cerr << "new value=" << pos.evaluate(BLACK) << ", correct=" << pos.evaluate_correct(BLACK) << endl;
+            cerr << "new value=" << value << ", correct=" << correct << endl;
             pos.print_csa();
         }
 
         cerr << "\nBench position: " << i + 1 << '/' << sfenList.size() << endl;
         int rap_time = get_system_time();
         for (j = 0; j < loops; j++) {
-            v = evaluate(pos, m);
+            v = pos.evaluate(pos.side_to_move(), ss);
         }
         rap_time = get_system_time() - rap_time;
         if (bDisplay) pos.print_csa();
-        cerr << "  evaluate():m=" << pos.get_material() << ", v= " << int(v) << ", margin=" << int(m) << ", time= " << rap_time << "(ms), " << conv_per_s(loops, rap_time) << " evaluate/s" << endl;
+        cerr << "  evaluate():m=" << pos.get_material() << ", v= " << int(v) << ", time= " << rap_time << "(ms), " << conv_per_s(loops, rap_time) << " evaluate/s" << endl;
     }
 
     time = get_system_time() - time;
