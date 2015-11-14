@@ -2653,7 +2653,7 @@ split_point_start: // At split points actual search starts from here
             // Don't overwrite existing correct entries
             if (!tte || tte->move() != pv[ply])
             {
-				////v = (pos.in_check() ? VALUE_NONE : pos.evaluate(pos, m));//バグの原因と思われる
+                v = VALUE_NONE; //(pos.in_check() ? VALUE_NONE : pos.evaluate(pos, m));//バグの原因と思われる
 
 #if defined(NANOHA)
                 TT.store(k, pos.hand_value_of_side(), VALUE_NONE, VALUE_TYPE_NONE, DEPTH_NONE, pv[ply], v, m);
