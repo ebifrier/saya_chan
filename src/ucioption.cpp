@@ -27,8 +27,6 @@
 #include "ucioption.h"
 
 using std::string;
-using std::cout;
-using std::endl;
 
 OptionsMap Options; // Global object
 
@@ -67,8 +65,8 @@ static string stringify(const T& v) {
 
 OptionsMap::OptionsMap() {
 
-	int cpus = Min(cpu_count(), MAX_THREADS);
-	int msd = cpus < 8 ? 4 : 7;
+    int cpus = Min(cpu_count(), MAX_THREADS);
+    int msd = cpus < 8 ? 4 : 7;
     OptionsMap& o = *this;
 
     o["OwnBook"]                                   = UCIOption(true);
@@ -79,7 +77,7 @@ OptionsMap::OptionsMap() {
     o["Hash"]                                      = UCIOption(256, 4, 8192);
     o["Use Search Log"]                            = UCIOption(false);
     o["Search Log Filename"]                       = UCIOption("SearchLog.txt");
-    o["Minimum Split Depth"]                       = UCIOption(msd, 4, 7);////
+    o["Minimum Split Depth"]                       = UCIOption(msd, 4, 7);
     o["Maximum Number of Threads per Split Point"] = UCIOption(5, 4, 8);
     o["Use Sleeping Threads"]                      = UCIOption(false);
     o["Clear Hash"]                                = UCIOption(false, "button");
@@ -92,7 +90,7 @@ OptionsMap::OptionsMap() {
     o["DrawValue"]                                 = UCIOption(0, -30000, 30000);
     o["Output_AllDepth"]                           = UCIOption(false);
     o["ByoyomiMargin"]                             = UCIOption(0, -10000, 10000);
-	o["Slow_Mover"]                                = UCIOption(120, 10, 1000);
+    o["Slow_Mover"]                                = UCIOption(120, 10, 1000);
 }
 
 
