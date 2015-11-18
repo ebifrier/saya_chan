@@ -322,7 +322,7 @@ public:
     int make_list_correct(int list0[], int list1[]) const;
     int evaluate_raw_correct() const;
     Value evaluate_correct(const Color us) const;
-    int evaluate_raw_body(const Color us);
+    int evaluate_raw_body();
     Value evaluate(const Color us, SearchStack* ss);
 
     // 稲庭判定(bInaniwa にセットするため const でない)
@@ -531,7 +531,7 @@ private:
     void make_list_undo_capture(PieceNumber kn);
     PieceNumber make_list_drop(Piece piece, Square to);
     void make_list_undo_drop(PieceNumber kn, Piece piece);
-    int evaluate_make_list_diff(const Color us);
+    int evaluate_raw_make_list_diff();
 
     int list0[PIECENUMBER_MAX + 1]; //駒番号numの評価関数用list0
     int list1[PIECENUMBER_MAX + 1]; //駒番号numの評価関数用list1
@@ -541,7 +541,7 @@ private:
 
 #if defined(EVAL_DIFF)
     int doapc(const int index[2]) const;
-    bool calcDifference(SearchStack* ss) const;
+    bool calc_difference(SearchStack* ss) const;
 #endif
 #endif
 

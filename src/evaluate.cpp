@@ -646,7 +646,7 @@ void Position::make_list_undo_drop(PieceNumber kn, Piece piece)
     handcount[piece]++;
 }
 
-int Position::evaluate_make_list_diff(const Color us)
+int Position::evaluate_raw_make_list_diff()
 {
     const int sq_bk = SQ_BKING;
     const int sq_wk = SQ_WKING;
@@ -695,7 +695,7 @@ int Position::doapc(const int index[2]) const
 
 // 評価値の差分計算を行う
 // 値がない時はfalseを返す。
-bool Position::calcDifference(SearchStack* ss) const
+bool Position::calc_difference(SearchStack* ss) const
 {
     if ((ss - 1)->staticEvalRaw == INT_MAX) { return false; }
     int diff = 0;
@@ -755,13 +755,13 @@ bool Position::calcDifference(SearchStack* ss) const
 #endif
 
 
-int Position::evaluate_raw_body(const Color us)
+int Position::evaluate_raw_body()
 {
 #if defined(MAKELIST_DIFF)
-    int score = evaluate_make_list_diff(us);
+    int score = evaluate_raw_make_list_diff();
 #else;
     // なぜかevaluate_bodyを通した方が速い
-    int score = evaluate_raw_correct(us);
+    int score = evaluate_raw_correct();
 #endif
 
     return score;
@@ -787,7 +787,7 @@ Value Position::evaluate(const Color us, SearchStack* ss)
     }
 
 #if defined(EVAL_DIFF)
-	else if (calcDifference(ss)) {
+	else if (calc_difference(ss)) {
         score = int(ss->staticEvalRaw);
         ehash_store(st->key, HAND_B, score);
     }
@@ -795,7 +795,7 @@ Value Position::evaluate(const Color us, SearchStack* ss)
 
     else {
         // 普通に評価値を計算
-        score = evaluate_raw_body(us);
+        score = evaluate_raw_body();
         ehash_store(st->key, HAND_B, score);
 #if defined(EVAL_DIFF)
         ss->staticEvalRaw = Value(score);
