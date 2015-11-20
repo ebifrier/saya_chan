@@ -1035,7 +1035,7 @@ namespace {
             assert(tte->static_value() != VALUE_NONE);
 
             ss->eval = tte->static_value();
-            ss->evalMargin = tte->static_value_margin();
+            ss->evalMargin = VALUE_ZERO; // tte->static_value_margin();
             refinedValue = refine_eval(tte, ss->eval, ss->ply);
         }
         else
@@ -1691,7 +1691,7 @@ split_point_start: // At split points actual search starts from here
             {
                 assert(tte->static_value() != VALUE_NONE);
 
-                evalMargin = tte->static_value_margin();
+                evalMargin = VALUE_ZERO; // tte->static_value_margin();
                 ss->eval = bestValue = tte->static_value();
             }
             else
@@ -2653,7 +2653,8 @@ split_point_start: // At split points actual search starts from here
             // Don't overwrite existing correct entries
             if (!tte || tte->move() != pv[ply])
             {
-                v = VALUE_NONE; //(pos.in_check() ? VALUE_NONE : pos.evaluate(pos, m));//バグの原因と思われる
+                //v = (pos.in_check() ? VALUE_NONE : pos.evaluate_correct(pos.side_to_move())); //バグの原因と思われる
+                v = VALUE_NONE;
 
 #if defined(NANOHA)
                 TT.store(k, pos.hand_value_of_side(), VALUE_NONE, VALUE_TYPE_NONE, DEPTH_NONE, pv[ply], v, m);

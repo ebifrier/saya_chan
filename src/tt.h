@@ -65,27 +65,27 @@ class TTEntry {
 
 public:
 #if defined(NANOHA)
-    void save(uint64_t k, uint32_t h, Value v, ValueType t, Depth d, Move m, int g, Value statV, Value statM) {
+    void save(uint32_t k, uint32_t h, Value v, ValueType t, Depth d, Move m, int g, Value statV, Value statM) {
 
-        key_depth    = (k & ~UINT64_C(0xFFFF)) | (d & 0xFFFF);
+        key32        = k;
         move32       = m;
-        hand30       = (h & 0x3FFFFFFF) | (t << 30);
+        hand32       = h;
+        valueType    = uint8_t(t);
         generation16 = uint16_t(g);
         value16      = int16_t(v);
+        depth16      = int16_t(d);
         staticValue  = int16_t(statV);
-        staticMargin = int16_t(statM);
     }
     void set_generation(int g) { generation16 = uint16_t(g); }
 
-    uint64_t key() const              { return (key_depth & ~UINT64_C(0xFFFF)); }
-    uint32_t hand() const             { return (hand30 & 0x3FFFFFFF); }
-    Depth depth() const               { return Depth((int16_t)(key_depth & 0xFFFF)); }
+    uint32_t key() const              { return key32; }
+    uint32_t hand() const             { return hand32; }
+    Depth depth() const               { return Depth(depth16); }
     Move move() const                 { return Move(move32); }
     Value value() const               { return Value(value16); }
-    ValueType type() const            { return ValueType((hand30 >> 30) & 0x0003); }
+    ValueType type() const            { return ValueType(valueType); }
     int generation() const            { return int(generation16); }
     Value static_value() const        { return Value(staticValue); }
-    Value static_value_margin() const { return Value(staticMargin); }
 #else
     void save(uint32_t k, Value v, ValueType t, Depth d, Move m, int g, Value statV, Value statM) {
 
@@ -112,11 +112,12 @@ public:
 
 private:
 #if defined(NANOHA)
-    uint64_t key_depth;
-    uint32_t hand30;
+    uint32_t key32;
+    uint32_t hand32;
     uint32_t move32;
+    uint8_t valueType;
     uint16_t generation16;
-    int16_t value16, staticValue, staticMargin;
+    int16_t value16, depth16, staticValue;
 #else
     uint32_t key32;
     uint16_t move16;
