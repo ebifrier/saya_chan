@@ -24,17 +24,14 @@
 #include "position.h"
 #include "evaluate.h"
 
-// 評価関数関連定義
-#if defined(EVAL_MICRO)
-#include "param_micro.h"
-#else
 // Aperyの評価値
 #include "param_new.h"
 #define FV_KPP  "KPP_synthesized.bin" 
 #define FV_KPP2 "KPP_synthesized2.bin" 
 #define FV_KKP  "KKP_synthesized.bin" 
 #define FV_KK   "KK_synthesized.bin" 
-#endif
+#define USE_FVKPP2
+//#define TEST_FVKPP
 
 #define EHASH_MASK          0x3fffffU      //* occupies 32MB 
 #define FV_SCALE            32
@@ -143,7 +140,7 @@ int ehash_probe(uint64_t current_key, unsigned int hand_b, int * __restrict psco
     hash_word = ehash_tbl[(unsigned int)current_key & EHASH_MASK];
 
 #if ! defined(__x86_64__)
-    hash_word ^= hash_word << 32;
+    //hash_word ^= hash_word << 32;
 #endif
 
     current_key ^= (uint64_t)hand_b << 30;
@@ -169,7 +166,7 @@ void ehash_store(uint64_t key, unsigned int hand_b, int score)
     hash_word |= (uint64_t)(score + 0x100000);
 
 #if ! defined(__x86_64__)
-    hash_word ^= hash_word << 32;
+    //hash_word ^= hash_word << 32;
 #endif
 
     ehash_tbl[(unsigned int)key & EHASH_MASK] = hash_word;
@@ -181,7 +178,7 @@ void Position::init_evaluate()
 	size_t size;
     int iret = 0;
 
-#if 0
+#if !defined(USE_FVKPP2) || defined(TEST_FVKPP)
     //KPP
     do {
         fp = fopen(FV_KPP, "rb");
@@ -193,7 +190,8 @@ void Position::init_evaluate()
 
     } while (0);
     if (fp) fclose(fp);
-#else
+#endif
+#if defined(USE_FVKPP2)
     pc_on_pc_entry *pc_on_sq = new pc_on_pc_entry[nsquare];
 
     do {
@@ -210,7 +208,7 @@ void Position::init_evaluate()
         for (int k = 0; k < fe_end; k++){
             for (int j = 0; j < fe_end; j++){
                 short value = (k <= j ? PcPcOnSq(sq, j, k) : PcPcOnSq(sq, k, j));
-#if 0
+#if defined(TEST_FVKPP)
                 if (kpp3[sq][k][j] != value) {
                     std::cerr << "Failed to load '"FV_KPP2"' file." << std::endl;
                     iret = -3;
@@ -780,29 +778,35 @@ Value Position::evaluate(const Color us, SearchStack* ss)
 #endif
 
     // ehash
-    if (ehash_probe(st->key, HAND_B, &score)) {
+    /*if (ehash_probe(st->key, HAND_B, &score)) {
 #if defined(EVAL_DIFF)
         ss->staticEvalRaw = Value(score);
 #endif
-    }
+    } else*/
 
 #if defined(EVAL_DIFF)
-	else if (calc_difference(ss)) {
+	if (calc_difference(ss)) {
         score = int(ss->staticEvalRaw);
-        ehash_store(st->key, HAND_B, score);
-    }
+        //ehash_store(st->key, HAND_B, score);
+    } else
 #endif
 
-    else {
+    {
         // 普通に評価値を計算
         score = evaluate_raw_body();
-        ehash_store(st->key, HAND_B, score);
+        //ehash_store(st->key, HAND_B, score);
 #if defined(EVAL_DIFF)
         ss->staticEvalRaw = Value(score);
 #endif
     }
 
-    assert(score == evaluate_raw_correct());
+#if defined(_DEBUG)
+    if (score != evaluate_raw_correct()) {
+        std::cout << "Evaluate Value Error !!!" << std::endl;
+        std::cout << to_fen() << std::endl;
+        exit(-1);
+    }
+#endif
 
     score /= FV_SCALE;
     score += MATERIAL;
