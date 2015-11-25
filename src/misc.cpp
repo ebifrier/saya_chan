@@ -59,7 +59,9 @@ using namespace std;
 
 #if defined(SAYA)
 static const string AppName = "Saya_chan";
-#if defined(MAKELIST_DIFF)
+#if defined(EVAL_DIFF)
+static const string EngineVersion = "0.1.11 Eval_Diff";
+#elif defined(MAKELIST_DIFF)
 static const string EngineVersion = "0.1.1 makelist_diff";
 #else
 static const string EngineVersion = "0.1.1";
@@ -111,7 +113,7 @@ const string engine_name() {
 const string engine_authors() {
 
 #if defined(SAYA)
-	return "ebifrier, espelade, kakiage";
+	return "ebifrier, espelade, kakiage and the listeners";
 #elif defined(NANOHA)
 	return "Kawabata, Kazuyuki";
 #else

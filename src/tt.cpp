@@ -93,18 +93,14 @@ void TranspositionTable::store(const Key posKey, Value v, ValueType t, Depth d, 
 #endif
     int c1, c2, c3;
     TTEntry *tte, *replace;
-#if defined(NANOHA)
-    uint64_t posKey48 = (posKey & ~UINT64_C(0xFFFF)); // Use the high 48 bits as key inside the cluster
-#else
     uint32_t posKey32 = posKey >> 32; // Use the high 32 bits as key inside the cluster
-#endif
 
     tte = replace = first_entry(posKey);
 
     for (int i = 0; i < ClusterSize; i++, tte++)
     {
 #if defined(NANOHA)
-        if (!tte->key() || (tte->key() == posKey48 && tte->hand() == h)) // Empty or overwrite old
+        if (!tte->key() || (tte->key() == posKey32 && tte->hand() == h)) // Empty or overwrite old
 #else
         if (!tte->key() || tte->key() == posKey32) // Empty or overwrite old
 #endif
@@ -114,7 +110,7 @@ void TranspositionTable::store(const Key posKey, Value v, ValueType t, Depth d, 
                 m = tte->move();
 
 #if defined(NANOHA)
-            tte->save(posKey48, h, v, t, d, m, generation, statV, kingD);
+            tte->save(posKey32, h, v, t, d, m, generation, statV, kingD);
 #else
             tte->save(posKey32, v, t, d, m, generation, statV, kingD);
 #endif
@@ -130,7 +126,7 @@ void TranspositionTable::store(const Key posKey, Value v, ValueType t, Depth d, 
             replace = tte;
     }
 #if defined(NANOHA)
-    replace->save(posKey48, h, v, t, d, m, generation, statV, kingD);
+    replace->save(posKey32, h, v, t, d, m, generation, statV, kingD);
 #else
     replace->save(posKey32, v, t, d, m, generation, statV, kingD);
 #endif
@@ -143,11 +139,11 @@ void TranspositionTable::store(const Key posKey, Value v, ValueType t, Depth d, 
 
 #if defined(NANOHA)
 TTEntry* TranspositionTable::probe(const Key posKey, uint32_t h) const {
-    uint64_t posKey48 = (posKey & ~UINT64_C(0xFFFF));
+    Key posKey32 = posKey >> 32;
     TTEntry* tte = first_entry(posKey);
 
     for (int i = 0; i < ClusterSize; i++, tte++)
-        if (tte->key() == posKey48 && tte->hand() == h)
+        if (tte->key() == posKey32 && tte->hand() == h)
             return tte;
 #else
 TTEntry* TranspositionTable::probe(const Key posKey) const {

@@ -23,9 +23,12 @@
 #define EVALUATE_H_INCLUDED
 
 #include "types.h"
+#include "search.h"
 
 class Position;
 
-Value evaluate(Position& pos, Value& margin);
+extern int ehash_probe(uint64_t current_key, unsigned int hand_b, int * __restrict pscore);
+extern void ehash_store(uint64_t key, unsigned int hand_b, int score);
+extern void ehash_clear();
 
 #endif // !defined(EVALUATE_H_INCLUDED)

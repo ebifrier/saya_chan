@@ -24,18 +24,16 @@
 #include "position.h"
 #include "evaluate.h"
 
-// 評価関数関連定義
-#if defined(EVAL_MICRO)
-#include "param_micro.h"
-#else
 // Aperyの評価値
 #include "param_new.h"
 #define FV_KPP  "KPP_synthesized.bin" 
 #define FV_KPP2 "KPP_synthesized2.bin" 
 #define FV_KKP  "KKP_synthesized.bin" 
 #define FV_KK   "KK_synthesized.bin" 
-#endif
+#define USE_FVKPP2
+//#define TEST_FVKPP
 
+#define EHASH_MASK          0x3fffffU      //* occupies 32MB 
 #define FV_SCALE            32
 #define MATERIAL            (this->material)
 
@@ -56,12 +54,13 @@
 #define I2HandRook(hand)    (((hand) & HAND_HI_MASK) >> HAND_HI_SHIFT)
 
 enum { pos_n = fe_end * (fe_end + 1) / 2 };
-typedef short pc_on_pc_entry[pos_n];
+typedef int16_t pc_on_pc_entry[pos_n];
+uint64_t ehash_tbl[EHASH_MASK + 1];
 
-typedef short kkp_entry[fe_end];
-short kpp3[nsquare][fe_end][fe_end];
-long kkp[nsquare][nsquare][fe_end];
-long kk[nsquare][nsquare];
+typedef int16_t kkp_entry[fe_end];
+int16_t kpp3[nsquare][fe_end][fe_end];
+int32_t kkp[nsquare][nsquare][fe_end];
+int32_t kk[nsquare][nsquare];
 
 namespace NanohaTbl {
     const short z2sq[] = {
@@ -79,49 +78,98 @@ namespace NanohaTbl {
 
     const KPP KppIndex0[32] = {
         none, f_pawn, f_lance, f_knight, f_silver, f_gold, f_bishop, f_rook,
-        none, f_gold, f_gold, f_gold, f_gold, none, f_horse, f_dragon,
+        none, f_gold, f_gold,  f_gold,   f_gold,   none,   f_horse,  f_dragon,
         none, e_pawn, e_lance, e_knight, e_silver, e_gold, e_bishop, e_rook,
-        none, e_gold, e_gold, e_gold, e_gold, none, e_horse, e_dragon
+        none, e_gold, e_gold,  e_gold,   e_gold,   none,   e_horse,  e_dragon
     };
 
     const KPP KppIndex1[32] = {
         none, e_pawn, e_lance, e_knight, e_silver, e_gold, e_bishop, e_rook,
-        none, e_gold, e_gold, e_gold, e_gold, none, e_horse, e_dragon,
+        none, e_gold, e_gold,  e_gold,   e_gold,   none,   e_horse,  e_dragon,
         none, f_pawn, f_lance, f_knight, f_silver, f_gold, f_bishop, f_rook,
-        none, f_gold, f_gold, f_gold, f_gold, none, f_horse, f_dragon
+        none, f_gold, f_gold,  f_gold,   f_gold,   none,   f_horse,  f_dragon
     };
 
     const KPP HandIndex0[32] = {
-        none, f_hand_pawn, f_hand_lance, f_hand_knight,
-        f_hand_silver, f_hand_gold, f_hand_bishop, f_hand_rook,
-        none, none, none, none, none, none, none, none,
-        none, e_hand_pawn, e_hand_lance, e_hand_knight,
-        e_hand_silver, e_hand_gold, e_hand_bishop, e_hand_rook,
-        none, none, none, none, none, none, none, none
+        none,           f_hand_pawn,   f_hand_lance,   f_hand_knight,
+        f_hand_silver,  f_hand_gold,   f_hand_bishop,  f_hand_rook,
+        none,           none,          none,           none,
+        none,           none,          none,           none,
+        none,           e_hand_pawn,   e_hand_lance,   e_hand_knight,
+        e_hand_silver,  e_hand_gold,   e_hand_bishop,  e_hand_rook,
+        none,           none,          none,           none,
+        none,           none,          none,           none,
     };
 
     const KPP HandIndex1[32] = {
-        none, e_hand_pawn, e_hand_lance, e_hand_knight,
-        e_hand_silver, e_hand_gold, e_hand_bishop, e_hand_rook,
-        none, none, none, none, none, none, none, none,
-        none, f_hand_pawn, f_hand_lance, f_hand_knight,
-        f_hand_silver, f_hand_gold, f_hand_bishop, f_hand_rook,
-        none, none, none, none, none, none, none, none
+        none,           e_hand_pawn,   e_hand_lance,   e_hand_knight,
+        e_hand_silver,  e_hand_gold,   e_hand_bishop,  e_hand_rook,
+        none,           none,          none,           none,
+        none,           none,          none,           none,
+        none,           f_hand_pawn,   f_hand_lance,   f_hand_knight,
+        f_hand_silver,  f_hand_gold,   f_hand_bishop,  f_hand_rook,
+        none,           none,          none,           none,
+        none,           none,          none,           none,
     };
 }
 
 namespace {
     static const int handB[14] = {
-        f_hand_pawn, e_hand_pawn, f_hand_lance, e_hand_lance,
+        f_hand_pawn,   e_hand_pawn,   f_hand_lance,  e_hand_lance,
         f_hand_knight, e_hand_knight, f_hand_silver, e_hand_silver,
-        f_hand_gold, e_hand_gold, f_hand_bishop, e_hand_bishop, f_hand_rook, e_hand_rook
+        f_hand_gold,   e_hand_gold,   f_hand_bishop, e_hand_bishop, 
+		f_hand_rook,   e_hand_rook
     };
 
     static const int handW[14] = {
-        e_hand_pawn, f_hand_pawn, e_hand_lance, f_hand_lance,
+        e_hand_pawn,   f_hand_pawn,   e_hand_lance,  f_hand_lance,
         e_hand_knight, f_hand_knight, e_hand_silver, f_hand_silver,
-        e_hand_gold, f_hand_gold, e_hand_bishop, f_hand_bishop, e_hand_rook, f_hand_rook
+        e_hand_gold,   f_hand_gold,   e_hand_bishop, f_hand_bishop,
+		e_hand_rook,   f_hand_rook
     };
+}
+
+void ehash_clear() {
+    memset(ehash_tbl, 0, sizeof(ehash_tbl));
+}
+
+int ehash_probe(uint64_t current_key, unsigned int hand_b, int * __restrict pscore)
+{
+    uint64_t hash_word, hash_key;
+
+    hash_word = ehash_tbl[(unsigned int)current_key & EHASH_MASK];
+
+#if ! defined(__x86_64__)
+    //hash_word ^= hash_word << 32;
+#endif
+
+    current_key ^= (uint64_t)hand_b << 30;
+    current_key &= ~(uint64_t)0x1fffffU;
+
+    hash_key = hash_word;
+    hash_key &= ~(uint64_t)0x1fffffU;
+
+    if (hash_key != current_key) { return 0; }
+
+    *pscore = (int)((unsigned int)hash_word & 0x1fffffU) - 0x100000;
+
+    return 1;
+}
+
+void ehash_store(uint64_t key, unsigned int hand_b, int score)
+{
+    uint64_t hash_word;
+
+    hash_word = key;
+    hash_word ^= (uint64_t)hand_b << 30;
+    hash_word &= ~(uint64_t)0x1fffffU;
+    hash_word |= (uint64_t)(score + 0x100000);
+
+#if ! defined(__x86_64__)
+    //hash_word ^= hash_word << 32;
+#endif
+
+    ehash_tbl[(unsigned int)key & EHASH_MASK] = hash_word;
 }
 
 void Position::init_evaluate()
@@ -130,19 +178,20 @@ void Position::init_evaluate()
 	size_t size;
     int iret = 0;
 
-	//KPP
-#if 0
-	do {
-		fp = fopen(FV_KPP, "rb");
-		if (fp == NULL) { iret = -2; break; }
+#if !defined(USE_FVKPP2) || defined(TEST_FVKPP)
+    //KPP
+    do {
+        fp = fopen(FV_KPP, "rb");
+        if (fp == NULL) { iret = -2; break; }
 
-		size = nsquare * fe_end * fe_end;
-		if (fread(kpp3, sizeof(short), size, fp) != size){ iret = -2; break; }
-		if (fgetc(fp) != EOF) { iret = -2; break; }
+        size = nsquare * fe_end * fe_end;
+        if (fread(kpp3, sizeof(int16_t), size, fp) != size){ iret = -2; break; }
+        if (fgetc(fp) != EOF) { iret = -2; break; }
 
-	} while (0);
-	if (fp) fclose(fp);
-#else
+    } while (0);
+    if (fp) fclose(fp);
+#endif
+#if defined(USE_FVKPP2)
     pc_on_pc_entry *pc_on_sq = new pc_on_pc_entry[nsquare];
 
     do {
@@ -159,53 +208,52 @@ void Position::init_evaluate()
         for (int k = 0; k < fe_end; k++){
             for (int j = 0; j < fe_end; j++){
                 short value = (k <= j ? PcPcOnSq(sq, j, k) : PcPcOnSq(sq, k, j));
-#if 0
+#if defined(TEST_FVKPP)
                 if (kpp3[sq][k][j] != value) {
                     std::cerr << "Failed to load '"FV_KPP2"' file." << std::endl;
                     iret = -3;
-                    goto exit_label;
+                    exit(-1);
                 }
 #endif
                 kpp3[sq][k][j] = value;
             }
         }
     }
-#if 0
-exit_label:;
-#endif
 
     delete[] pc_on_sq;
     pc_on_sq = NULL;
 #endif
 
 	//KKP
-	do {
-		fp = fopen(FV_KKP, "rb");
-		if (fp == NULL) { iret = -2; break; }
+    do {
+        fp = fopen(FV_KKP, "rb");
+        if (fp == NULL) { iret = -2; break; }
 
-		size = nsquare * nsquare * fe_end;
-		if (fread(kkp, sizeof(long), size, fp) != size){ iret = -2; break; }
-		if (fgetc(fp) != EOF) { iret = -2; break; }
+        size = nsquare * nsquare * fe_end;
+        if (fread(kkp, sizeof(int32_t), size, fp) != size){ iret = -2; break; }
+        if (fgetc(fp) != EOF) { iret = -2; break; }
 
-	} while (0);
-	if (fp) fclose(fp);
+    } while (0);
+    if (fp) fclose(fp);
 
 	//KK
 	do {
-		fp = fopen(FV_KK, "rb");
-		if (fp == NULL) { iret = -2; break; }
+        fp = fopen(FV_KK, "rb");
+        if (fp == NULL) { iret = -2; break; }
 
-		size = nsquare * nsquare;
-		if (fread(kk, sizeof(long), size, fp) != size){ iret = -2; break; }
-		if (fgetc(fp) != EOF) { iret = -2; break; }
+        size = nsquare * nsquare;
+        if (fread(kk, sizeof(int32_t), size, fp) != size){ iret = -2; break; }
+        if (fgetc(fp) != EOF) { iret = -2; break; }
 
-	} while (0);
-	if (fp) fclose(fp);
+    } while (0);
+    if (fp) fclose(fp);
 
-	if (iret < 0) {
-		std::cerr << "Can't load '*_synthesized' file." << std::endl;
+    if (iret < 0) {
+        std::cerr << "Can't load '*_synthesized' file." << std::endl;
         exit(-1);
-	}
+    }
+
+    ehash_clear();
 }
 
 int Position::compute_material() const
@@ -322,7 +370,6 @@ int Position::make_list_correct(int list0[PIECENUMBER_MAX + 1],
             const int z = (x << 4) + y;
             const int sq = NanohaTbl::z2sq[z];
             switch (ban[z]) {
-
             case SFU:
                 list0[nlist] = f_pawn + sq;
                 list1[nlist++] = e_pawn + Inv(sq);
@@ -417,8 +464,8 @@ int Position::make_list_correct(int list0[PIECENUMBER_MAX + 1],
     return nlist;
 }
 
-// 評価関数が正しいかどうかを判定するのに使う
-int Position::evaluate_correct(const Color us) const
+// 評価値のスケール前の値を計算します。
+int Position::evaluate_raw_correct() const
 {
     int list0[PIECENUMBER_MAX + 1]; //駒番号numのlist0
     int list1[PIECENUMBER_MAX + 1]; //駒番号numのlist1
@@ -434,8 +481,8 @@ int Position::evaluate_correct(const Color us) const
     for (int kn = 0; kn < nlist; kn++){
         const int k0 = list0[kn];
         const int k1 = list1[kn];
-        const short* pkppb = ppkppb[k0];
-        const short* pkppw = ppkppw[k1];
+        const int16_t* pkppb = ppkppb[k0];
+        const int16_t* pkppw = ppkppw[k1];
         for (int j = 0; j < kn; j++){
             score += pkppb[list0[j]];
             score -= pkppw[list1[j]];
@@ -443,295 +490,17 @@ int Position::evaluate_correct(const Color us) const
         score += kkp[sq_bk][sq_wk][k0];
     }
 
-    score /= FV_SCALE;
-    score += MATERIAL;
-    score = (us == BLACK) ? score : -score;
     return score;
 }
 
-int Position::make_list(int list0[NLIST], int list1[NLIST])
+// 評価関数が正しいかどうかを判定するのに使う
+Value Position::evaluate_correct(const Color us) const
 {
-    /* 0:歩 1:香 2:桂 3:銀 4:金 5:角 6:飛車 */
-    int SHandCount[7] = {}, GHandCount[7] = {};
-    int nlist = 0;
-
-    for (int kn = KNE_FU; kn >= KNS_HI; --kn) {
-        int Kkind = knkind[kn];
-        int Kpos = knpos[kn];   // 駒の位置(1:先手持駒, 2:後手持駒)
-
-        /* (盤上は0x11から0x99のため右に2ビットシフトして0になるのは持ち駒 */
-        /* 盤上 */
-        if (Kpos >> 2){
-            const int sq = conv_z2sq(Kpos);
-            switch (Kkind) {
-            case SFU:
-                list0[nlist] = f_pawn + sq;
-                list1[nlist] = e_pawn + Inv(sq);
-                ++nlist;
-                break;
-            case GFU:
-                list0[nlist] = e_pawn + sq;
-                list1[nlist] = f_pawn + Inv(sq);
-                ++nlist;
-                break;
-            case STO:
-                list0[nlist] = f_gold + sq;
-                list1[nlist] = e_gold + Inv(sq);
-                ++nlist;
-                break;
-            case GTO:
-                list0[nlist] = e_gold + sq;
-                list1[nlist] = f_gold + Inv(sq);
-                ++nlist;
-                break;
-            case SKY:
-                list0[nlist] = f_lance + sq;
-                list1[nlist] = e_lance + Inv(sq);
-                ++nlist;
-                break;
-            case GKY:
-                list0[nlist] = e_lance + sq;
-                list1[nlist] = f_lance + Inv(sq);
-                ++nlist;
-                break;
-            case SNY:
-                list0[nlist] = f_gold + sq;
-                list1[nlist] = e_gold + Inv(sq);
-                ++nlist;
-                break;
-            case GNY:
-                list0[nlist] = e_gold + sq;
-                list1[nlist] = f_gold + Inv(sq);
-                ++nlist;
-                break;
-            case SKE:
-                list0[nlist] = f_knight + sq;
-                list1[nlist] = e_knight + Inv(sq);
-                ++nlist;
-                break;
-            case GKE:
-                list0[nlist] = e_knight + sq;
-                list1[nlist] = f_knight + Inv(sq);
-                ++nlist;
-                break;
-            case SNK:
-                list0[nlist] = f_gold + sq;
-                list1[nlist] = e_gold + Inv(sq);
-                ++nlist;
-                break;
-            case GNK:
-                list0[nlist] = e_gold + sq;
-                list1[nlist] = f_gold + Inv(sq);
-                ++nlist;
-                break;
-            case SGI:
-                list0[nlist] = f_silver + sq;
-                list1[nlist] = e_silver + Inv(sq);
-                ++nlist;
-                break;
-            case GGI:
-                list0[nlist] = e_silver + sq;
-                list1[nlist] = f_silver + Inv(sq);
-                ++nlist;
-                break;
-            case SNG:
-                list0[nlist] = f_gold + sq;
-                list1[nlist] = e_gold + Inv(sq);
-                ++nlist;
-                break;
-            case GNG:
-                list0[nlist] = e_gold + sq;
-                list1[nlist] = f_gold + Inv(sq);
-                ++nlist;
-                break;
-            case SKI:
-                list0[nlist] = f_gold + sq;
-                list1[nlist] = e_gold + Inv(sq);
-                ++nlist;
-                break;
-            case GKI:
-                list0[nlist] = e_gold + sq;
-                list1[nlist] = f_gold + Inv(sq);
-                ++nlist;
-                break;
-            case SKA:
-                list0[nlist] = f_bishop + sq;
-                list1[nlist] = e_bishop + Inv(sq);
-                ++nlist;
-                break;
-            case GKA:
-                list0[nlist] = e_bishop + sq;
-                list1[nlist] = f_bishop + Inv(sq);
-                ++nlist;
-                break;
-            case SUM:
-                list0[nlist] = f_horse + sq;
-                list1[nlist] = e_horse + Inv(sq);
-                ++nlist;
-                break;
-            case GUM:
-                list0[nlist] = e_horse + sq;
-                list1[nlist] = f_horse + Inv(sq);
-                ++nlist;
-                break;
-            case SHI:
-                list0[nlist] = f_rook + sq;
-                list1[nlist] = e_rook + Inv(sq);
-                ++nlist;
-                break;
-            case GHI:
-                list0[nlist] = e_rook + sq;
-                list1[nlist] = f_rook + Inv(sq);
-                ++nlist;
-                break;
-            case SRY:
-                list0[nlist] = f_dragon + sq;
-                list1[nlist] = e_dragon + Inv(sq);
-                ++nlist;
-                break;
-            case GRY:
-                list0[nlist] = e_dragon + sq;
-                list1[nlist] = f_dragon + Inv(sq);
-                ++nlist;
-                break;
-            default:
-                __assume(false);
-                break;
-            }
-        }
-        else if (Kpos == 1) { // 先手持駒
-            switch (Kkind) {
-            case SFU:
-                ++SHandCount[0];
-                list0[nlist] = f_hand_pawn + SHandCount[0];
-                list1[nlist] = e_hand_pawn + SHandCount[0];
-                ++nlist;
-                break;
-            case SKY:
-                ++SHandCount[1];
-                list0[nlist] = f_hand_lance + SHandCount[1];
-                list1[nlist] = e_hand_lance + SHandCount[1];
-                ++nlist;
-                break;
-            case SKE:
-                ++SHandCount[2];
-                list0[nlist] = f_hand_knight + SHandCount[2];
-                list1[nlist] = e_hand_knight + SHandCount[2];
-                ++nlist;
-                break;
-            case SGI:
-                ++SHandCount[3];
-                list0[nlist] = f_hand_silver + SHandCount[3];
-                list1[nlist] = e_hand_silver + SHandCount[3];
-                ++nlist;
-                break;
-            case SKI:
-                ++SHandCount[4];
-                list0[nlist] = f_hand_gold + SHandCount[4];
-                list1[nlist] = e_hand_gold + SHandCount[4];
-                ++nlist;
-                break;
-            case SKA:
-                ++SHandCount[5];
-                list0[nlist] = f_hand_bishop + SHandCount[5];
-                list1[nlist] = e_hand_bishop + SHandCount[5];
-                ++nlist;
-                break;
-            case SHI:
-                ++SHandCount[6];
-                list0[nlist] = f_hand_rook + SHandCount[6];
-                list1[nlist] = e_hand_rook + SHandCount[6];
-                ++nlist;
-                break;
-            default:
-                __assume(false); /* 心持ち高速化 */
-                break;
-            }
-        }
-        else /*(Kpos == 2)*/ {  // 後手持駒
-            switch (Kkind) {
-            case GFU:
-                ++GHandCount[0];
-                list0[nlist] = e_hand_pawn + GHandCount[0];
-                list1[nlist] = f_hand_pawn + GHandCount[0];
-                ++nlist;
-                break;
-            case GKY:
-                ++GHandCount[1];
-                list0[nlist] = e_hand_lance + GHandCount[1];
-                list1[nlist] = f_hand_lance + GHandCount[1];
-                ++nlist;
-                break;
-            case GKE:
-                ++GHandCount[2];
-                list0[nlist] = e_hand_knight + GHandCount[2];
-                list1[nlist] = f_hand_knight + GHandCount[2];
-                ++nlist;
-                break;
-            case GGI:
-                ++GHandCount[3];
-                list0[nlist] = e_hand_silver + GHandCount[3];
-                list1[nlist] = f_hand_silver + GHandCount[3];
-                ++nlist;
-                break;
-            case GKI:
-                ++GHandCount[4];
-                list0[nlist] = e_hand_gold + GHandCount[4];
-                list1[nlist] = f_hand_gold + GHandCount[4];
-                ++nlist;
-                break;
-            case GKA:
-                ++GHandCount[5];
-                list0[nlist] = e_hand_bishop + GHandCount[5];
-                list1[nlist] = f_hand_bishop + GHandCount[5];
-                ++nlist;
-                break;
-            case GHI:
-                ++GHandCount[6];
-                list0[nlist] = e_hand_rook + GHandCount[6];
-                list1[nlist] = f_hand_rook + GHandCount[6];
-                ++nlist;
-                break;
-            default:
-                __assume(false); /* 心持ち高速化 */
-                break;
-            }
-        }
-    }
-
-    assert(nlist == NLIST);
-    return nlist;
-}
-
-int Position::evaluate_body(const Color us)
-{
-    int list0[NLIST]; // 駒番号numのlist0
-    int list1[NLIST]; // 駒番号numのlist1
-    int nlist = make_list(list0, list1);
-
-    const int sq_bk = SQ_BKING;
-    const int sq_wk = SQ_WKING;
-
-    const kkp_entry* ppkppb = kpp3[sq_bk];
-    const kkp_entry* ppkppw = kpp3[Inv(sq_wk)];
-
-    int score = kk[sq_bk][sq_wk];
-    for (int kn = 0; kn < NLIST; kn++){
-        const int k0 = list0[kn];
-        const int k1 = list1[kn];
-        const short* pkppb = ppkppb[k0];
-        const short* pkppw = ppkppw[k1];
-        for (int j = 0; j < kn; j++){
-            score += pkppb[list0[j]];
-            score -= pkppw[list1[j]];
-        }
-        score += kkp[sq_bk][sq_wk][k0];
-    }
-
+    int score = evaluate_raw_correct();
     score /= FV_SCALE;
     score += MATERIAL;
     score = (us == BLACK) ? score : -score;
-    return score;
+    return Value(score);
 }
 
 
@@ -742,7 +511,7 @@ void Position::init_make_list()
     memset(list1, 0, sizeof(list1));
     memset(listkn, 0, sizeof(listkn));
     memset(handcount, 0, sizeof(handcount));
-        
+
     for (PieceNumber kn = PIECENUMBER_MIN; kn <= PIECENUMBER_MAX; ++kn){
         const int kpos = knpos[kn];
         const Piece piece = Piece(knkind[kn]);
@@ -772,22 +541,32 @@ void Position::init_make_list()
 
 void Position::make_list_move(PieceNumber kn, Piece piece, Square to)
 {
-    if (kn < PIECENUMBER_MIN) return;
+	if (kn < PIECENUMBER_MIN) {
+#if defined(EVAL_DIFF)
+        st->changeType = 0;
+#endif
+		return;
+	}
 
-    st->fromlist[0] = list0[kn];
-    st->fromlist[1] = list1[kn];
+    st->oldlist[0] = list0[kn];
+    st->oldlist[1] = list1[kn];
 
     const int sq = conv_z2sq(to);
     list0[kn] = NanohaTbl::KppIndex0[piece] + sq;
     list1[kn] = NanohaTbl::KppIndex1[piece] + Inv(sq);
+
+#if defined(EVAL_DIFF)
+    st->newlist[0] = list0[kn];
+    st->newlist[1] = list1[kn];
+#endif
 }
 
 void Position::make_list_undo_move(PieceNumber kn)
 {
     if (kn < PIECENUMBER_MIN) return;
 
-    list0[kn] = st->fromlist[0];
-    list1[kn] = st->fromlist[1];
+    list0[kn] = st->oldlist[0];
+    list1[kn] = st->oldlist[1];
 }
 
 void Position::make_list_capture(PieceNumber kn, Piece captureType)
@@ -795,17 +574,23 @@ void Position::make_list_capture(PieceNumber kn, Piece captureType)
     assert(PIECENUMBER_MIN <= kn && kn <= PIECENUMBER_MAX);
 
     // 捕られる駒の情報
-    st->caplist[0] = list0[kn];
-    st->caplist[1] = list1[kn];
+    st->oldcap[0] = list0[kn];
+    st->oldcap[1] = list1[kn];
 
     // 捕った持駒の情報
-    st->cap_hand = captureType;
+    st->capHand = captureType;
 
     // 1枚増やす
     const int count = ++handcount[captureType];
     list0[kn] = NanohaTbl::HandIndex0[captureType] + count;
     list1[kn] = NanohaTbl::HandIndex1[captureType] + count;
     listkn[list0[kn]] = kn;
+
+#if defined(EVAL_DIFF)
+    st->newcap[0] = list0[kn];
+    st->newcap[1] = list1[kn];
+    st->changeType = 2;
+#endif
 
     assert(count <= 18);
     assert(list0[kn] < fe_hand_end);
@@ -814,12 +599,12 @@ void Position::make_list_capture(PieceNumber kn, Piece captureType)
 void Position::make_list_undo_capture(PieceNumber kn)
 {
     // 持駒を戻す
-    handcount[st->cap_hand]--;
+    handcount[st->capHand]--;
     listkn[list0[kn]] = PIECENUMBER_NONE;
 
     // listを戻す
-    list0[kn] = st->caplist[0];
-    list1[kn] = st->caplist[1];
+    list0[kn] = st->oldcap[0];
+    list1[kn] = st->oldcap[1];
 }
 
 PieceNumber Position::make_list_drop(Piece piece, Square to)
@@ -831,8 +616,8 @@ PieceNumber Position::make_list_drop(Piece piece, Square to)
     assert(handIndex0 < fe_hand_end);
 
     // knをセーブ
-    st->droplist[0] = list0[kn];
-    st->droplist[1] = list1[kn];
+    st->oldlist[0] = list0[kn];
+    st->oldlist[1] = list1[kn];
 
     listkn[handIndex0] = PIECENUMBER_NONE; // 駒番号の一番大きい持ち駒を消去
     handcount[piece]--;                    // 打つので１枚減らす
@@ -842,20 +627,24 @@ PieceNumber Position::make_list_drop(Piece piece, Square to)
     list0[kn] = NanohaTbl::KppIndex0[piece] + sq;
     list1[kn] = NanohaTbl::KppIndex1[piece] + Inv(sq);
 
+#if defined(EVAL_DIFF)
+    st->newlist[0] = list0[kn];
+    st->newlist[1] = list1[kn];
+#endif
     return kn;
 }
 
 void Position::make_list_undo_drop(PieceNumber kn, Piece piece)
 {
-    list0[kn] = st->droplist[0];
-    list1[kn] = st->droplist[1];
+    list0[kn] = st->oldlist[0];
+    list1[kn] = st->oldlist[1];
     //st->drop_hand = piece;
 
     listkn[list0[kn]] = kn;
     handcount[piece]++;
 }
 
-int Position::evaluate_make_list_diff(const Color us)
+int Position::evaluate_raw_make_list_diff()
 {
     const int sq_bk = SQ_BKING;
     const int sq_wk = SQ_WKING;
@@ -878,30 +667,149 @@ int Position::evaluate_make_list_diff(const Color us)
         score += kkp[sq_bk][sq_wk][k0];
     }
 
+    return score;
+}
+#endif
+
+
+#if defined(EVAL_DIFF)
+// 差分計算
+// index[2]は動かした駒のlist
+int Position::doapc(const int index[2]) const
+{
+    const int sq_bk = SQ_BKING;
+    const int sq_wk = SQ_WKING;
+
+    int sum = kkp[sq_bk][sq_wk][index[0]];
+    const auto* pkppb = kpp3[sq_bk][index[0]];
+    const auto* pkppw = kpp3[Inv(sq_wk)][index[1]];
+    for (int kn = PIECENUMBER_MIN; kn <= PIECENUMBER_MAX; kn++) {
+        sum += pkppb[list0[kn]];
+        sum -= pkppw[list1[kn]];
+    }
+
+    return sum;
+}
+
+// 評価値の差分計算を行う
+// 値がない時はfalseを返す。
+bool Position::calc_difference(SearchStack* ss) const
+{
+    if ((ss - 1)->staticEvalRaw == INT_MAX) { return false; }
+    int diff = 0;
+
+    const auto* ppkppb = kpp3[SQ_BKING];
+    const auto* ppkppw = kpp3[Inv(SQ_WKING)];
+
+    /* oldは引く。newは足す。
+     * 参照されてない＆２重に参照してるとこに注意
+     */
+
+    // king-move
+    // TODO: 差分計算できるらしい
+    if (st->changeType == 0) { return false; }
+
+    // newlist
+    diff += doapc(st->newlist);
+    // oldlist
+    diff -= doapc(st->oldlist);
+
+    // newlist oldlist 引きすぎたので足す
+    diff += ppkppb[st->newlist[0]][st->oldlist[0]];
+    diff -= ppkppw[st->newlist[1]][st->oldlist[1]];
+
+    // cap
+    if (st->changeType == 2) { // newが２つ
+
+        // newcap oldlist 引きすぎたので足す
+        diff += ppkppb[st->newcap[0]][st->oldlist[0]];
+        diff -= ppkppw[st->newcap[1]][st->oldlist[1]];
+
+        // newcap
+        diff += doapc(st->newcap);
+        // newlist newcap (２回足されてるので引く)
+        diff -= ppkppb[st->newlist[0]][st->newcap[0]];
+        diff += ppkppw[st->newlist[1]][st->newcap[1]];
+
+        // oldcap
+        diff -= doapc(st->oldcap);
+        // new oldcap 引きすぎたので足す
+        diff += ppkppb[st->newlist[0]][st->oldcap[0]];
+        diff -= ppkppw[st->newlist[1]][st->oldcap[1]];
+        diff += ppkppb[st->newcap[0]][st->oldcap[0]];
+        diff -= ppkppw[st->newcap[1]][st->oldcap[1]];
+
+        // oldcap oldlist 参照されてない 
+        diff -= ppkppb[st->oldcap[0]][st->oldlist[0]];
+        diff += ppkppw[st->oldcap[1]][st->oldlist[1]];
+    }
+    //else if (st->ct !=1 ){ MYABORT(); }
+
+    // セーブ
+    ss->staticEvalRaw = Value(diff) + (ss - 1)->staticEvalRaw;
+
+    return true;
+}
+#endif
+
+
+int Position::evaluate_raw_body()
+{
+#if defined(MAKELIST_DIFF)
+    int score = evaluate_raw_make_list_diff();
+#else;
+    // なぜかevaluate_bodyを通した方が速い
+    int score = evaluate_raw_correct();
+#endif
+
+    return score;
+}
+
+Value Position::evaluate(const Color us, SearchStack* ss)
+{
+	int score = 0;
+
+#if defined(EVAL_DIFF)
+    // null move
+    if (ss->staticEvalRaw != INT_MAX) {
+        score = int(ss->staticEvalRaw);
+    }
+    else
+#endif
+
+    // ehash
+    /*if (ehash_probe(st->key, HAND_B, &score)) {
+#if defined(EVAL_DIFF)
+        ss->staticEvalRaw = Value(score);
+#endif
+    } else*/
+
+#if defined(EVAL_DIFF)
+	if (calc_difference(ss)) {
+        score = int(ss->staticEvalRaw);
+        //ehash_store(st->key, HAND_B, score);
+    } else
+#endif
+
+    {
+        // 普通に評価値を計算
+        score = evaluate_raw_body();
+        //ehash_store(st->key, HAND_B, score);
+#if defined(EVAL_DIFF)
+        ss->staticEvalRaw = Value(score);
+#endif
+    }
+
+#if defined(_DEBUG)
+    if (score != evaluate_raw_correct()) {
+        std::cout << "Evaluate Value Error !!!" << std::endl;
+        std::cout << to_fen() << std::endl;
+        exit(-1);
+    }
+#endif
+
     score /= FV_SCALE;
     score += MATERIAL;
     score = (us == BLACK) ? score : -score;
-    return score;
-}
-#endif
-
-
-int Position::evaluate(const Color us)
-{
-#if defined(MAKELIST_DIFF)
-    int score = evaluate_make_list_diff(us);
-#else
-    // なぜかevaluate_bodyを通した方が速い
-    int score = evaluate_body(us);
-    //int score = evaluate_correct(us);
-#endif
-
-    return score;
-}
-
-Value evaluate(Position& pos, Value& margin)
-{
-	margin = VALUE_ZERO;
-	const Color us = pos.side_to_move();
-	return Value(pos.evaluate(us));
+    return Value(score);
 }

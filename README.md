@@ -6,8 +6,8 @@
 
 ### バイナリファイル ###
 
-Windows用バイナリファイルはこちらになります。  
-http://garnet-alice.net/shogiengine/saya_chan/index.html
+評価関数用のファイルはこちらになります。  
+http://garnet-alice.net/shogiengine/saya_chan/data/eval_data.zip
 
 ### ビルドと実行方法 ###
 

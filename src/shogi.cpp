@@ -811,9 +811,13 @@ void Position::do_move(Move m, StateInfo& newSt)
         Piece cap_hand;     // 捕獲した持駒のPiece
         Piece drop_hand;    // 打った持駒のPiece
         PieceNumber kndrop; // 打った持駒の駒番号
-        int caplist[2];     // 捕獲される駒のlist
-        int droplist[2];    // 打つ持駒のlist
-        int fromlist[2];    // 動かす駒のlist
+        int oldcap[2];      // 捕獲される駒のlist
+        int oldlist[2];     // 動かす駒,打つ持駒のlist
+#endif
+#if defined(EVAL_DIFF)
+        int newcap[2];      // for cap
+        int newlist[2];     // for drop, slide
+        int changeType;     // changetype king=0, drop&nocap=1, cap=2 
 #endif
     };
 
@@ -828,6 +832,10 @@ void Position::do_move(Move m, StateInfo& newSt)
     // Increment the 50 moves rule draw counter. Resetting it to zero in the
     // case of non-reversible moves is taken care of later.
     st->pliesFromNull++;
+
+#if defined(EVAL_DIFF)
+    st->changeType = 1;
+#endif
 
     const Color us = side_to_move();
     if (move_is_drop(m))
@@ -1295,6 +1303,10 @@ void Position::do_drop(Move m)
 /// be restored to exactly the same state as before the move was made.
 
 void Position::undo_move(Move m) {
+
+#if defined(EVAL_DIFF)
+    st->changeType = INT_MAX;
+#endif
 
 #if defined(MOVE_TRACE)
     assert(m != MOVE_NULL);    // NullMoveはundo_null_move()で処理する

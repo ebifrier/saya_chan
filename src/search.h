@@ -51,6 +51,9 @@ struct SearchStack {
 #if defined(NANOHA)
     bool checkmateTested;
 #endif
+#if defined(EVAL_DIFF)
+    Value staticEvalRaw;
+#endif
 };
 
 
