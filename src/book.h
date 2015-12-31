@@ -24,6 +24,9 @@
 
 #include <map>
 #include <cstring>    // for memcmp()
+#include <cstdio>
+#include <sstream> 
+#include <fstream>
 
 #include "move.h"
 #include "rkiss.h"
@@ -77,5 +80,7 @@ public:
 };
 
 extern Book *book;
+
+void makeBook(std::string& cmd);
 
 #endif // !defined(BOOK_H_INCLUDED)

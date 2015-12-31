@@ -21,6 +21,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <string>
 
 #include "book.h"
 #include "movegen.h"
@@ -208,4 +209,114 @@ Move Book::get_move(Position& pos, bool findBestMove)
     }
 
     return MOVE_NONE;
+}
+
+void makeBook(std::string& cmd){
+	std::cout << "start makebook" << std::endl;
+	std::string fileName;
+	fileName = cmd;
+	std::ifstream ifs(fileName.c_str(), std::ios::binary);
+	if (!ifs) {
+		std::cout << "I cannot open " << fileName << std::endl;
+		return;
+	}
+	std::string line;
+
+	const char* StarFEN = "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1";
+	std::map<BookKey,BookEntry> bookMap;
+
+	long gameCount = 0;
+	long entryCount = 0;
+
+	while (std::getline(ifs, line)) {
+		std::string elem;
+		std::stringstream ss(line);
+		ss >> elem; // 棋譜番号を飛ばす。
+		std::cout << "kifu No."<<elem << std::endl;
+		ss >> elem; // 対局日を飛ばす。
+		ss >> elem; // 先手
+		const std::string sente = elem;
+		ss >> elem; // 後手
+		const std::string gote = elem;
+		ss >> elem; // (0:引き分け,1:先手の勝ち,2:後手の勝ち)
+		const Color winner = (elem == "1" ? BLACK : elem == "2" ? WHITE : COLOR_NONE);
+		const Color saveColor = winner;
+		int moveCount=0;
+
+		if (!std::getline(ifs, line)) {
+			std::cout << "!!! header only !!!" << std::endl;
+			return;
+		}
+
+		//盤面初期化
+		Position pos(StarFEN, 0); // The root position
+		StateInfo state;
+
+		int gameMovetotal = line.length() / 6 ;
+		for (int i = 0; i < gameMovetotal; ++i){
+			if (moveCount > 80){ break; }
+			std::string moveStrCSA = line.substr(0, 6);
+			std::string sengo = (pos.side_to_move() == BLACK ? "+" : "-");
+			moveStrCSA = sengo + moveStrCSA;
+			const Move move = move_from_csa(pos, moveStrCSA);
+			++moveCount;
+			if (move == MOVE_NONE) {
+				//pos.print();
+				std::cout << "!! Illegal move = Count" << moveCount << ": " << moveStrCSA << " !!" << std::endl;
+				break;
+			}
+			line.erase(0, 6); // 先頭から6文字削除
+			//一手すすめる
+			pos.do_move(move, state);
+
+				BookKey key;
+				int ret = pos.EncodeHuffman(key.data);
+				if (ret < 0) {
+					std::cout << std::endl<< gameCount << std::endl;
+					pos.print_csa();
+					output_info("Error!:Huffman encode!\n");
+					break;
+				}
+
+				const Score score = SCORE_ZERO;
+				//BookEntryの初期化
+				BookEntry be;
+				be.eval = score;
+				be.hindo = 1;
+				if (winner == BLACK){
+					be.swin = 1; be.gwin = 0;
+				}
+				else{
+					be.swin = 0; be.gwin = 1;
+				}
+				std::map<BookKey, BookEntry>::_Pairib pib = bookMap.insert(std::make_pair(key, be));
+				if (!pib.second){//キーが重複
+					auto it = pib.first;
+					if ((*it).second.hindo < USHRT_MAX){
+						++(*it).second.hindo;
+						if (winner == BLACK){ ++(*it).second.swin; }
+						else{ ++(*it).second.gwin; }
+					}
+				}
+				else{/*局面登録成功*/
+					++entryCount;
+				}
+		}
+		++gameCount;
+		//std::cout << "done:" << gameCount << std::endl;
+		/*if (gameCount % 500 == 0){ std::cout << entryCount << std::endl; }
+		else if (gameCount % 100 == 0){ std::cout << "o"; }
+		else if (gameCount % 20 == 0){ std::cout << "."; }*/
+	}
+
+	std::cout << "file making..." << std::endl;
+
+	std::ofstream ofs("book.jsk", std::ios::binary);
+	for (auto& elem : bookMap) {
+		BookKey bKey = elem.first;
+		BookEntry bEntry = elem.second;
+		ofs.write(reinterpret_cast<char*>(&(bKey)), sizeof(BookKey));
+		ofs.write(reinterpret_cast<char*>(&(bEntry)), sizeof(BookEntry));
+	}
+	std::cout << "end makebook" << std::endl;
 }
