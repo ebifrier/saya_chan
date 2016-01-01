@@ -32,6 +32,7 @@
 #include "thread.h"
 #include "search.h"
 #include "ucioption.h"
+#include "book.h"
 
 // この２つの定義を消さないと、gtestでエラーが出る。
 #undef Min
@@ -106,6 +107,9 @@ int main(int argc, char* argv[]) {
         uci_loop();
     }
 #if defined(NANOHA)
+	else if (string(argv[1]) == "makebook"){
+		makeBook(string(argv[2]));
+	}
     else if (string(argv[1]) == "bench" && argc > 2 
              && (string(argv[2]) == "mate1" || string(argv[2]) == "mate3")) {
         bench_mate(--argc, ++argv);
