@@ -57,9 +57,15 @@ typedef unsigned __int64 uint64_t;
 #ifndef UINT64_C
 #if defined(_MSC_VER)
 #define UINT64_C(x) (x ## UI64)
-#define PRId64      "I64d"
 #else
 #define UINT64_C(x) (x ## llu)
+#endif
+#endif
+
+#ifndef PRId64
+#if defined(_MSC_VER)
+#define PRId64      "I64d"
+#else
 #define PRId64      "lld"
 #endif
 #endif
