@@ -90,7 +90,7 @@ OptionsMap::OptionsMap() {
     o["DrawValue"]                                 = UCIOption(0, -30000, 30000);
     o["Output_AllDepth"]                           = UCIOption(false);
     o["ByoyomiMargin"]                             = UCIOption(0, -10000, 10000);
-    o["Slow_Mover"]                                = UCIOption(120, 10, 1000);
+    o["Slow_Mover"]                                = UCIOption(30, 10, 1000);
 }
 
 
