@@ -62,7 +62,7 @@ static const string AppName = "Saya_chan";
 #if defined(EVAL_DIFF)
 static const string EngineVersion = "0.1.11 Eval_Diff";
 #elif defined(MAKELIST_DIFF)
-static const string EngineVersion = "0.1.1 makelist_diff";
+static const string EngineVersion = "0.1.2.5 makelist_diff";
 #else
 static const string EngineVersion = "0.1.1";
 #endif
