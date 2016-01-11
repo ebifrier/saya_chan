@@ -144,35 +144,38 @@ Move Book::get_move(Position& pos, bool findBestMove)
             }
         }
         for (i = 0; i < teNum; i++) {
-            if (hindo2[i].hindo > 0) {
-                // 多いものを候補に入れる
-                if (candidate[3].hindo < hindo2[i].hindo) {
-                    for (int j = 0; j < 4; j++) {
-                        if (candidate[j].hindo < hindo2[i].hindo) {
-                            for (int k = 3; k > j; k--) {
-                                candidate[k] = candidate[k-1];
-                            }
-                            candidate[j] = hindo2[i];
-                            candidate[j].eval = i;
-                            break;
-                        }
-                    }
-                }
-
-                // 勝率算出
-                if (hindo2[i].swin + hindo2[i].gwin > 0) {
-                    swin = hindo2[i].swin / float(hindo2[i].swin + hindo2[i].gwin);
-                } else {
-                    swin = 0.5f;
-                }
-                if (pos.side_to_move() != BLACK) swin = 1.0f - swin;
-
-                // 極端に少ない手は選択しない ⇒最頻出数の10分の1以下とする
-                if (max_hindo / 10 < hindo2[i].hindo && win_max < swin) {
-                    max = i;
-                    win_max = swin;
-                }
-            }
+			//頻度4以下の手は候補に入れない
+			if (hindo2[i].hindo > 4){
+				//勝率算出
+				if (hindo2[i].swin + hindo2[i].gwin > 0) {
+					swin = hindo2[i].swin / float(hindo2[i].swin + hindo2[i].gwin);
+					if (pos.side_to_move() != BLACK){ swin = 1.0f - swin; }
+				}
+				else {
+					swin = 0.0f;
+				}
+				//勝率36%以下の手は候補に入れない
+				if ( swin > 0.36f){
+					// 多いものを候補に入れる(頻度順に並んだcandidateの適切な場所に挿入する）
+					if (candidate[3].hindo < hindo2[i].hindo) {
+						for (int j = 0; j < 4; j++) {
+							if (candidate[j].hindo < hindo2[i].hindo) {
+								for (int k = 3; k > j; k--) {
+									candidate[k] = candidate[k-1];
+								}
+								candidate[j] = hindo2[i];
+								candidate[j].eval = i;
+								break;
+							}
+						}
+					}
+				}
+			}
+            // 極端に少ない手は選択しない ⇒最頻出数の10分の1以下とする
+			if (max_hindo / 10 < hindo2[i].hindo && win_max < swin && hindo2[i].hindo > 4) {
+				max = i;
+				win_max = swin;
+			}
         }
 
         if (max >= 0) {
@@ -195,14 +198,19 @@ Move Book::get_move(Position& pos, bool findBestMove)
                 }
                 if (hindo2[max].swin + hindo2[max].gwin > 0) {
                     swin = hindo2[max].swin / float(hindo2[max].swin + hindo2[max].gwin);
-                    if (pos.side_to_move() != BLACK) swin = 1.0f - swin;
+					if (pos.side_to_move() != BLACK){ swin = 1.0f - swin; }
                 } else {
-                    swin = 0.5f;
+                    swin = 0.0f;
                 }
             }
             // もっともよさそうな手を返す
-            output_info("info string %5.1f%%, P(%d, %d)\n", swin*100.0f, hindo2[max].swin, hindo2[max].gwin);
-            return moves[max].move;
+			if (swin > 0.36f){
+				output_info("info string %5.1f%%, P(%d, %d)\n", swin*100.0f, hindo2[max].swin, hindo2[max].gwin);
+				return moves[max].move;
+			}
+			else{
+				output_info("info string No book data(plys=%d)\n", pos.startpos_ply_counter());
+			}
         } else {
             output_info("info string No book data(plys=%d)\n", pos.startpos_ply_counter());
         }

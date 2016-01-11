@@ -189,6 +189,7 @@ void MovePicker::go_next_phase() {
 		// プラスの手であっても残り探索深さがある程度ないときや、指し手の数が多いときは
 		// insertion_sort()もやめたほうがいいのではなかろうか。ということで3手以上残り探索深さが無い時はソートしないのも一案。byやねうらおさん
 		//if (depth >= 3 * ONE_PLY)
+		if (depth >= 3)
 			sort<MoveStack>(curMove, lastMove);
         return;
 
@@ -196,7 +197,8 @@ void MovePicker::go_next_phase() {
         curMove = lastMove;
         lastMove = lastNonCapture;
 		// 3手以上残り探索深さがあるなら、ソートしてしまう
-		if (depth >= 3 * ONE_PLY)
+		//if (depth >= 3 * ONE_PLY)
+		if (depth >= 5)
 			sort<MoveStack>(curMove, lastMove);
 		return;
 
