@@ -18,3 +18,4 @@ log/
 *.o
 *.obj
 src.old/
+build/visualc12/.vs/
